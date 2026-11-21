@@ -1,0 +1,29 @@
+---
+import Base from '../layouts/Base.astro';
+import { getContent } from '../lib/content';
+import { renderMarkdown } from '../lib/markdown';
+import { routes } from '../lib/routes';
+import { fmtDate, ui, type Lang } from '../data/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang];
+const { now } = await getContent();
+const textLang: Lang = now[lang] ? lang : now.be ? 'be' : 'en';
+const doc = now[textLang];
+const html = doc ? await renderMarkdown(doc.body, { lang: textLang, now: true }) : '';
+---
+<Base {lang} title={t.now} alternates={routes.now} current="now">
+  <div class="col">
+    <h1 class="page-title">{t.now}</h1>
+    <p class="intro muted">{t.nowIntro}</p>
+    <div class="prose text" lang={textLang !== lang ? textLang : undefined} set:html={html} />
+    {textLang !== lang && <p class="label">{t.notTranslated}</p>}
+    <p class="label">{t.updated(fmtDate(new Date(now.updatedAt), lang))}</p>
+  </div>
+</Base>
+<style>
+  .col { padding-top: 64px; max-width: var(--prose-max); }
+  .intro { margin: 8px 0 32px; }
+  .text { font-size: 19px; line-height: 1.6; }
+</style>

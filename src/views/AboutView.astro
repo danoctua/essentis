@@ -1,0 +1,93 @@
+---
+import Base from '../layouts/Base.astro';
+import Avatar from '../components/Avatar.astro';
+import Mark from '../components/Mark.astro';
+import { getContent } from '../lib/content';
+import { renderMarkdown } from '../lib/markdown';
+import { routes } from '../lib/routes';
+import { site } from '../lib/site';
+import { ui, type Lang } from '../data/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang];
+const c = await getContent();
+const pick = <T,>(o: Partial<Record<Lang, T>>) => o[lang] ?? o.be ?? o.en;
+const about = pick(c.about);
+const uses = pick(c.uses);
+const md = (s?: string) => (s ? renderMarkdown(s, { lang }) : Promise.resolve(''));
+const [intro, meaning, summary, usesHtml] = await Promise.all([md(about?.intro), md(about?.meaning), md(about?.workSummary), md(uses?.body)]);
+const yr = (n?: number | null) => (n && n > 0 ? String(n) : '…');
+const span = (from: number, to?: number | null) => `${yr(from)}–${to === null || to === undefined ? t.now.toLowerCase() : yr(to)}`;
+---
+<Base {lang} title={t.about} alternates={routes.about} current="about">
+  <div class="grid">
+    <div>
+      <div class="title-row"><Avatar size={64} /><h1 class="page-title">{t.about}</h1></div>
+      <div class="prose lead" set:html={intro} />
+
+      <section class="sec" aria-labelledby="work-h">
+        <h2 id="work-h" class="h2">{t.work}</h2>
+        <div class="prose" set:html={summary} />
+        <ul class="years">
+          {c.work.map((w) => (
+            <li>
+              <span class="muted num">{span(w.from, w.to)}</span>
+              <span><span class="strong">{w.role}, {w.company}</span><span class="muted small">{w.line[lang] ?? w.line.be}</span></span>
+            </li>
+          ))}
+        </ul>
+        {c.projects.length > 0 && <h3 class="h3">{t.projects}</h3>}
+        <ul class="years one">
+          {c.projects.map((p) => (
+            <li><span>
+              {p.url ? <a class="strong" href={p.url}>{p.name}</a> : <span class="strong">{p.name}</span>}
+              <span class="muted small">{p.text[lang] ?? p.text.be}</span>
+            </span></li>
+          ))}
+        </ul>
+      </section>
+
+      {usesHtml && (
+        <section class="sec" aria-labelledby="uses-h">
+          <h2 id="uses-h" class="h2">{t.uses}</h2>
+          <div class="prose" set:html={usesHtml} />
+        </section>
+      )}
+
+      <section class="sec" aria-labelledby="links-h">
+        <h2 id="links-h" class="h2">{t.links}</h2>
+        <ul class="rows">
+          {site.links.map((l) => <li><a class="row plain" href={l.href}><span class="ttl">{l.label[lang]}</span><span class="meta">{l.note}</span></a></li>)}
+          {site.email && <li><a class="row plain" href={`mailto:${site.email}`}><span class="ttl">{t.mail}</span><span class="meta">{site.email}</span></a></li>}
+        </ul>
+      </section>
+    </div>
+
+    <aside class="why" aria-labelledby="why-h">
+      <Mark size={120} />
+      <h2 id="why-h" class="h2">{t.whyEssentis}</h2>
+      <div class="prose meaning" set:html={meaning} />
+    </aside>
+  </div>
+</Base>
+<style>
+  .grid { display: grid; gap: 48px; padding-top: 64px; }
+  .title-row { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+  .sec { margin-top: 56px; }
+  .sec .h2 { margin-bottom: 12px; }
+  .h3 { margin: 32px 0 4px; font-size: 18px; font-weight: 500; }
+  .years { list-style: none; margin: 16px 0 0; padding: 0; max-width: var(--prose-max); }
+  .years li { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-top: 1px solid var(--line); }
+  .years.one li { grid-template-columns: minmax(0, 1fr); }
+  .num { font-variant-numeric: tabular-nums; }
+  .strong { display: block; font-weight: 500; }
+  .small { display: block; font-size: 15px; }
+  .why { display: flex; flex-direction: column; gap: 16px; }
+  .meaning :global(p) { margin: 0 0 16px; }
+  .meaning :global(p + p) { font-size: 15px; color: var(--muted); }
+  @media (min-width: 900px) {
+    .grid { grid-template-columns: minmax(0, 640px) minmax(0, 1fr); gap: 96px; }
+    .why { padding-top: 8px; }
+  }
+</style>

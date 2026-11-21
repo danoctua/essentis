@@ -1,0 +1,38 @@
+[
+  {
+    "id": "cluepoints",
+    "from": 0,
+    "to": null,
+    "role": "Lead Engineer",
+    "company": "CluePoints",
+    "order": 0,
+    "line": {
+      "be": "Софт для клінічных дасьледаваньняў. Каманда сэньёр-інжынэраў, праца з агентамі ШІ.",
+      "en": "Software for clinical trials. A squad of senior engineers, working with AI agents."
+    }
+  },
+  {
+    "id": "w2",
+    "from": 0,
+    "to": 0,
+    "role": "[Роля]",
+    "company": "[кампанія]",
+    "order": 1,
+    "line": {
+      "be": "[Адзін радок пра тое, што зьмянілася.]",
+      "en": "[One line on what changed.]"
+    }
+  },
+  {
+    "id": "w3",
+    "from": 2019,
+    "to": 0,
+    "role": "[Роля]",
+    "company": "[кампанія]",
+    "order": 2,
+    "line": {
+      "be": "[Адзін радок пра тое, што зьмянілася.]",
+      "en": "[One line on what changed.]"
+    }
+  }
+]

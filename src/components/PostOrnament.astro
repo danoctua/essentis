@@ -1,0 +1,13 @@
+---
+/** Per-post cross-stitch ornament, seeded by the original title. 44 px in lists, 96 px on the post. */
+import { ornament } from '../lib/ornament';
+interface Props { seed: string; size?: 44 | 96 }
+const { seed, size = 44 } = Astro.props;
+const big = size > 44;
+const o = ornament(seed, big ? 8 : 5);
+const sw = big ? 2.4 : 2.6;
+---
+<svg class="orn" viewBox={o.viewBox} width={size} height={size} aria-hidden="true">
+  <path d={o.red} fill="none" stroke="var(--rust)" stroke-width={sw} stroke-linecap="round" />
+  <path d={o.black} fill="none" stroke="var(--ink)" stroke-width={sw} stroke-linecap="round" />
+</svg>

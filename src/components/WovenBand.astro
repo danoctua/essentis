@@ -1,0 +1,15 @@
+---
+/** The rushnik band. Once per site, on Home, between the intro and the lists. Crops, never shrinks. */
+import { wovenBand } from '../lib/graphics';
+const { rust, ink, viewBox } = wovenBand();
+---
+<div class="band" aria-hidden="true">
+  <svg {viewBox} preserveAspectRatio="xMinYMid slice">
+    <path d={rust} fill="var(--rust)" />
+    <path d={ink} fill="var(--ink)" />
+  </svg>
+</div>
+<style>
+  .band { margin-top: 64px; }
+  .band svg { width: 100%; height: clamp(88px, 11vw, 136px); }
+</style>

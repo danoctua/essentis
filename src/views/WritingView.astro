@@ -1,0 +1,74 @@
+---
+import Base from '../layouts/Base.astro';
+import PostRow from '../components/PostRow.astro';
+import { getContent } from '../lib/content';
+import { postView } from '../lib/view';
+import { routes } from '../lib/routes';
+import { TOPICS, topicLabels, ui, type Lang } from '../data/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang];
+const posts = (await getContent()).posts.map((p) => postView(p, lang));
+const years = [...new Set(posts.map((p) => p.date.getUTCFullYear()))];
+const used = TOPICS.filter((k) => posts.some((p) => p.topics.includes(k)));
+---
+<Base {lang} title={t.writing} description={t.writingIntro} alternates={routes.writing} current="writing">
+  <div class="col">
+    <h1 class="page-title">{t.writing}</h1>
+    <p class="intro muted">{t.writingIntro}</p>
+    {/* Filter needs JS; hidden until the script shows it, so the list never looks broken without it. */}
+    <div class="chips" role="group" aria-label={t.topic} hidden data-chips>
+      <button type="button" class="chip" aria-pressed="true" data-topic="">{t.allTopics}</button>
+      {used.map((k) => <button type="button" class="chip" aria-pressed="false" data-topic={k}>{topicLabels[lang][k]}</button>)}
+    </div>
+    <p class="empty muted" hidden data-empty>{t.noPostsForTopic}</p>
+    {years.map((y) => (
+      <section class="year" aria-labelledby={`y${y}`} data-year>
+        <h2 id={`y${y}`} class="year-h">{y}</h2>
+        <ul class="rows">
+          {posts.filter((p) => p.date.getUTCFullYear() === y).map((p) => (
+            <li data-topics={p.topics.join(' ')}><PostRow post={p} pageLang={lang} showDek /></li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </div>
+</Base>
+<script>
+  const chips = document.querySelector<HTMLElement>('[data-chips]');
+  if (chips) {
+    chips.hidden = false;
+    chips.addEventListener('click', (e) => {
+      const b = (e.target as Element).closest<HTMLButtonElement>('button[data-topic]');
+      if (!b) return;
+      const topic = b.dataset.topic ?? '';
+      chips.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      let shown = 0;
+      document.querySelectorAll<HTMLElement>('[data-year]').forEach((sec) => {
+        let inYear = 0;
+        sec.querySelectorAll<HTMLElement>('li[data-topics]').forEach((li) => {
+          const on = !topic || (li.dataset.topics ?? '').split(' ').includes(topic);
+          li.hidden = !on;
+          if (on) inYear++;
+        });
+        sec.hidden = inYear === 0;
+        shown += inYear;
+      });
+      const empty = document.querySelector<HTMLElement>('[data-empty]');
+      if (empty) empty.hidden = shown > 0;
+    });
+  }
+</script>
+<style>
+  .col { max-width: 880px; padding-top: 64px; }
+  .intro { margin: 8px 0 0; max-width: 600px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  .chip { min-height: var(--tap-min); padding: 0 14px; border-radius: var(--radius-md); box-shadow: inset 0 0 0 1px var(--line); font-size: 15px; color: var(--muted); transition: color 150ms; }
+  .chip:hover { color: var(--ink); }
+  .chip[aria-pressed="true"] { background: var(--paper-raised); color: var(--ink); box-shadow: inset 0 0 0 1px var(--rust); }
+  .empty { margin: 48px 0 0; }
+  .year { display: grid; gap: 8px; margin-top: 48px; }
+  .year-h { margin: 16px 0 0; font-size: 22px; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+  @media (min-width: 900px) { .year { grid-template-columns: 160px minmax(0, 1fr); gap: 32px; } }
+</style>

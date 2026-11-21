@@ -1,0 +1,69 @@
+---
+import '../styles/fonts.css';
+import '../styles/tokens.css';
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { site } from '../lib/site';
+import { ui, type Lang } from '../data/ui';
+import type { Alternates, RouteName } from '../lib/routes';
+
+interface Props {
+  lang: Lang;
+  /** Page title without the site name; omit on Home. */
+  title?: string;
+  description?: string;
+  alternates: Alternates;
+  current?: RouteName;
+  type?: 'website' | 'article';
+}
+const { lang, title, description, alternates, current, type = 'website' } = Astro.props;
+const t = ui[lang];
+const fullTitle = title ? `${title} · essentis` : `essentis · ${site.owner[lang]}`;
+const desc = description ?? t.siteDescription;
+const canonical = new URL(alternates[lang], site.url).href;
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={desc} />
+    <meta name="author" content={site.owner[lang]} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="be" href={new URL(alternates.be, site.url).href} />
+    <link rel="alternate" hreflang="en" href={new URL(alternates.en, site.url).href} />
+    <link rel="alternate" hreflang="x-default" href={new URL(alternates.be, site.url).href} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#efe9df" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1a1714" media="(prefers-color-scheme: dark)" />
+    <meta property="og:site_name" content="essentis" />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title ?? fullTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={lang === 'be' ? 'be_BY' : 'en_GB'} />
+    <script is:inline>
+      // Remember the language picked with the switch. Only the Belarusian root redirects, and only
+      // for visitors arriving from elsewhere, so a shared deep link always opens as sent.
+      try {
+        var k = 'essentis-lang', r = document.referrer;
+        var fromOutside = !r || new URL(r).host !== location.host;
+        if (location.pathname === '/' && fromOutside && localStorage.getItem(k) === 'en') location.replace('/en/');
+        document.addEventListener('click', function (e) {
+          var a = e.target instanceof Element && e.target.closest('a[data-lang-switch]');
+          if (a) try { localStorage.setItem(k, a.getAttribute('data-lang-switch')); } catch (_) {}
+        });
+      } catch (_) {}
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#main">{t.skip}</a>
+    <Header {lang} {alternates} {current} />
+    <main id="main" class="wrap">
+      <slot />
+    </main>
+    <Footer {lang} />
+  </body>
+</html>

@@ -1,0 +1,18 @@
+---
+import PostOrnament from './PostOrnament.astro';
+import type { PostView } from '../lib/view';
+import { mediaUrl } from '../lib/site';
+import type { Lang } from '../data/ui';
+interface Props { post: PostView; pageLang: Lang; showDek?: boolean }
+const { post: p, pageLang, showDek = false } = Astro.props;
+const cover = p.cover ? mediaUrl(p.cover.key, 400) : null;
+---
+<a class="row" href={p.url}>
+  {cover ? <img class="cover" src={cover} alt="" width="44" height="44" loading="lazy" /> : <PostOrnament seed={p.seed} />}
+  <span>
+    <span class="ttl" lang={p.foreign ? p.lang : undefined}>{p.title}</span>
+    {p.gloss && <span class="gloss" lang={pageLang}>{p.gloss}</span>}
+    {showDek && p.dek && <span class="dek" lang={p.foreign ? p.lang : undefined}>{p.dek}</span>}
+    <span class="meta">{p.meta}</span>
+  </span>
+</a>

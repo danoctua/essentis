@@ -1,0 +1,21 @@
+[
+  {
+    "id": "site",
+    "name": "essentis.xyz",
+    "url": "https://essentis.xyz",
+    "order": 0,
+    "text": {
+      "be": "Гэты сайт: Astro, Firestore і транслітарацыя ў Łacinka для адрасоў старонак.",
+      "en": "This site: Astro, Firestore and Łacinka transliteration for page addresses."
+    }
+  },
+  {
+    "id": "p2",
+    "name": "[Праект]",
+    "order": 1,
+    "text": {
+      "be": "[Якая была праблема і што зроблена.]",
+      "en": "[What the problem was and what was built.]"
+    }
+  }
+]

@@ -1,0 +1,166 @@
+[
+  {
+    "id": "lacinka",
+    "originalLang": "en",
+    "slug": "lacinka-kirylica-i-pole-slug",
+    "topics": [
+      "lang",
+      "eng"
+    ],
+    "status": "published",
+    "publishedAt": "2026-11-12T09:00:00Z",
+    "updatedAt": "2026-11-12T09:00:00Z",
+    "variants": {
+      "en": {
+        "title": "Łacinka, Cyrillic and a slug field",
+        "body": "My name has two spellings, and both are correct. In Cyrillic it is Данііл. In Łacinka, the Latin alphabet Belarusian has been written in for centuries, it is Daniił. When I started this site, the first decision was not the framework. It was what goes into the URL.\n\nSlugs are usually an afterthought: lowercase everything, strip the accents, swap spaces for hyphens. Run Belarusian through a typical slugify and you get a transliteration built for Russian. It turns ў into a bare u and loses the difference between л and ль, which in Łacinka is the difference between ł and l.\n\nŁacinka already solves this, and its rules are small enough to fit in a function. Hard л becomes ł, soft л becomes l, ў becomes ŭ, and the soft sign folds into the consonant before it: зь, сь, нь and ць become ź, ś, ń and ć.[^1]\n\n```python title=\"Зычныя: ці мяккая літара, вырашае наступная.\"\nSOFT = {\"з\": \"ź\", \"с\": \"ś\", \"н\": \"ń\", \"ц\": \"ć\"}\n\ndef lacinka(word, base):\n    out = []\n    for i, ch in enumerate(word):\n        nxt = word[i + 1 : i + 2]\n        if ch == \"л\":\n            soft = nxt != \"\" and nxt in \"ьіеёюя\"\n            out.append(\"l\" if soft else \"ł\")\n        elif ch in SOFT and nxt == \"ь\":\n            out.append(SOFT[ch])\n        elif ch != \"ь\":\n            out.append(base.get(ch, ch))\n    return \"\".join(out)\n```\n\nThat covers the consonants. Vowels need one more rule, about when е turns into ie and when into je, and that is next month's post.\n\nThe code was the easy part. A URL is a public decision about which alphabet comes first. I chose Łacinka for the address bar and both scripts for everything a person reads.\n\n[^1]: Łacinka has more than one convention. These are the rules I use, and the ones this site's code follows.\n",
+        "dek": "Every Belarusian name has two spellings. A URL can only hold one."
+      },
+      "be": {
+        "title": "Łacinka, кірыліца і поле slug"
+      }
+    }
+  },
+  {
+    "id": "agents",
+    "originalLang": "en",
+    "slug": "shto-zmianilasia-kali-maja-kamanda-pachala-pracavac-z-ahientami",
+    "topics": [
+      "ai",
+      "eng"
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-28T09:00:00Z",
+    "updatedAt": "2026-10-28T09:00:00Z",
+    "variants": {
+      "en": {
+        "title": "What changed when my squad started working with AI agents",
+        "body": "Sample text for local development. The real post will replace it."
+      },
+      "be": {
+        "title": "Што зьмянілася, калі мая каманда пачала працаваць з агентамі"
+      }
+    }
+  },
+  {
+    "id": "laddzia",
+    "originalLang": "be",
+    "slug": "chamu-ja-pierachytvaju-laddziu-rospachy",
+    "topics": [
+      "books"
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-09T09:00:00Z",
+    "updatedAt": "2026-10-09T09:00:00Z",
+    "variants": {
+      "be": {
+        "title": "Чаму я перачытваю «Ладдзю роспачы»",
+        "body": "Узорны тэкст для лякальнай распрацоўкі. Сапраўдны допіс яго заменіць."
+      },
+      "en": {
+        "title": "Why I keep rereading «The Boat of Despair»"
+      }
+    }
+  },
+  {
+    "id": "adr",
+    "originalLang": "en",
+    "slug": "adr-jak-listy-nastupnaj-kamandzie",
+    "topics": [
+      "eng"
+    ],
+    "status": "published",
+    "publishedAt": "2026-09-21T09:00:00Z",
+    "updatedAt": "2026-09-21T09:00:00Z",
+    "variants": {
+      "en": {
+        "title": "ADRs are letters to the next team",
+        "body": "Sample text for local development. The real post will replace it."
+      },
+      "be": {
+        "title": "ADR як лісты наступнай камандзе"
+      }
+    }
+  },
+  {
+    "id": "lagow",
+    "originalLang": "be",
+    "slug": "lagow-zamak-jaki-stau-hatelem",
+    "topics": [
+      "travel"
+    ],
+    "status": "published",
+    "publishedAt": "2026-08-30T09:00:00Z",
+    "updatedAt": "2026-08-30T09:00:00Z",
+    "variants": {
+      "be": {
+        "title": "Łagów: замак, які стаў гатэлем",
+        "body": "Узорны тэкст для лякальнай распрацоўкі. Сапраўдны допіс яго заменіць."
+      },
+      "en": {
+        "title": "Łagów: a castle that became a hotel"
+      }
+    }
+  },
+  {
+    "id": "ddd",
+    "originalLang": "be",
+    "slug": "domain-driven-design-prachytany-dvojchy",
+    "topics": [
+      "books",
+      "eng"
+    ],
+    "status": "published",
+    "publishedAt": "2026-08-02T09:00:00Z",
+    "updatedAt": "2026-08-02T09:00:00Z",
+    "variants": {
+      "be": {
+        "title": "Domain-Driven Design, прачытаны двойчы",
+        "body": "Узорны тэкст для лякальнай распрацоўкі. Сапраўдны допіс яго заменіць."
+      },
+      "en": {
+        "title": "Domain-Driven Design, read twice"
+      }
+    }
+  },
+  {
+    "id": "draft",
+    "originalLang": "be",
+    "slug": "charnavik",
+    "topics": [
+      "lang"
+    ],
+    "status": "draft",
+    "publishedAt": "2026-11-20T09:00:00Z",
+    "updatedAt": "2026-11-20T09:00:00Z",
+    "variants": {
+      "be": {
+        "title": "Чарнавік",
+        "body": "Узорны тэкст для лякальнай распрацоўкі. Сапраўдны допіс яго заменіць."
+      },
+      "en": {
+        "title": "Draft"
+      }
+    }
+  },
+  {
+    "id": "kupalle",
+    "originalLang": "be",
+    "slug": "muzyka-kupalla",
+    "topics": [
+      "music"
+    ],
+    "status": "published",
+    "publishedAt": "2025-07-06T09:00:00Z",
+    "updatedAt": "2025-07-06T09:00:00Z",
+    "variants": {
+      "be": {
+        "title": "Музыка Купальля",
+        "body": "Узорны тэкст для лякальнай распрацоўкі. Сапраўдны допіс яго заменіць."
+      },
+      "en": {
+        "title": "The music of Kupalle"
+      }
+    }
+  }
+]

@@ -1,0 +1,11 @@
+---
+/** The Мазаіка mark. Decorative wherever it sits next to the wordmark. */
+import { markPaths } from '../lib/graphics';
+interface Props { size?: number; label?: string }
+const { size = 24, label } = Astro.props;
+const { outer, inner } = markPaths();
+---
+<svg viewBox="0 0 24 24" width={size} height={size} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : 'true'}>
+  <path d={outer} fill="var(--rust)" />
+  <path d={inner} fill="var(--ink)" />
+</svg>

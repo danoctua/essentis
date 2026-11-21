@@ -1,0 +1,9 @@
+---
+/** Stitched divider. Full width above the footer, or short (72 units) at the end of a long read. */
+import { dividerPath } from '../lib/graphics';
+interface Props { short?: boolean }
+const width = Astro.props.short ? 72 : 1200;
+---
+<svg class="divider" viewBox={`0 0 ${width} 10`} preserveAspectRatio="xMinYMid slice" style={Astro.props.short ? 'width:72px' : undefined} aria-hidden="true">
+  <path d={dividerPath(width)} />
+</svg>

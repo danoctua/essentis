@@ -1,0 +1,75 @@
+---
+import Base from '../layouts/Base.astro';
+import Avatar from '../components/Avatar.astro';
+import NowBlock from '../components/NowBlock.astro';
+import WovenBand from '../components/WovenBand.astro';
+import PostRow from '../components/PostRow.astro';
+import AlbumRow from '../components/AlbumRow.astro';
+import { getContent } from '../lib/content';
+import { postView } from '../lib/view';
+import { routes } from '../lib/routes';
+import { site } from '../lib/site';
+import { ui, type Lang } from '../data/ui';
+import { renderMarkdown } from '../lib/markdown';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang];
+const c = await getContent();
+const latest = c.posts.slice(0, 4).map((p) => postView(p, lang));
+const albums = c.notes.filter((n) => n.photos.length > 0).slice(0, 2);
+const about = c.about[lang] ?? c.about.be;
+const bio = about ? await renderMarkdown(about.bio, { lang, now: true }) : '';
+const other: Lang = lang === 'be' ? 'en' : 'be';
+---
+<Base {lang} alternates={routes.home}>
+  <section class="hero" aria-labelledby="name-h">
+    <div>
+      <div class="who">
+        <Avatar size={88} />
+        <div>
+          <h1 id="name-h" class="name">{site.owner[lang]}</h1>
+          <p class="alt-name" lang={other === 'en' ? 'be-Latn' : 'be'}>{site.owner[other]}</p>
+        </div>
+      </div>
+      <div class="prose bio" set:html={bio} />
+      <p class="more"><a href={routes.about[lang]}>{t.moreAboutMe}</a></p>
+    </div>
+    <NowBlock now={c.now} {lang} />
+  </section>
+
+  <WovenBand />
+
+  <div class="lower">
+    <section aria-labelledby="latest-h">
+      <div class="sechead"><h2 id="latest-h" class="h2">{t.latest}</h2><a href={routes.writing[lang]}>{t.allPosts}</a></div>
+      <ul class="rows">
+        {latest.map((p) => <li><PostRow post={p} pageLang={lang} /></li>)}
+      </ul>
+    </section>
+    {albums.length > 0 && (
+      <section aria-labelledby="chan-h">
+        <div class="sechead"><h2 id="chan-h" class="h2">{t.fromChannel}</h2><a href={site.channelUrl}>{t.openChannel}</a></div>
+        <p class="chan-note">{t.channelNote}</p>
+        <ul class="rows">
+          {albums.map((n) => <li><AlbumRow note={n} {lang} /></li>)}
+        </ul>
+      </section>
+    )}
+  </div>
+</Base>
+<style>
+  .hero { display: grid; gap: 32px; padding-top: 48px; }
+  .who { display: flex; align-items: center; gap: 20px; }
+  .name { margin: 0; font-size: clamp(36px, 5vw, 44px); line-height: 1.1; font-weight: 500; letter-spacing: -0.02em; }
+  .alt-name { margin: 4px 0 0; color: var(--muted); }
+  .bio { margin-top: 24px; max-width: 560px; font-size: 19px; line-height: 1.6; }
+  .bio :global(p) { margin: 0; }
+  .more { margin: 16px 0 0; font-size: 15px; }
+  .lower { display: grid; gap: 48px; margin-top: 56px; }
+  .chan-note { margin: 0 0 8px; font-size: 15px; color: var(--muted); }
+  @media (min-width: 900px) {
+    .hero { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 64px; padding-top: 80px; align-items: start; }
+    .lower { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 64px; }
+  }
+</style>

@@ -1,0 +1,58 @@
+---
+import Base from '../layouts/Base.astro';
+import PostOrnament from '../components/PostOrnament.astro';
+import PostRow from '../components/PostRow.astro';
+import Divider from '../components/Divider.astro';
+import type { PostView as PV } from '../lib/view';
+import { renderMarkdown } from '../lib/markdown';
+import { postAlternates } from '../lib/routes';
+import { site } from '../lib/site';
+import { fmtDate, NB, ui, weekday, type Lang } from '../data/ui';
+
+interface Props { lang: Lang; post: PV; prev?: PV; next?: PV }
+const { lang, post: p, prev, next } = Astro.props;
+const t = ui[lang];
+const html = await renderMarkdown(p.body, { lang: p.lang });
+const fl = p.foreign ? p.lang : undefined;
+const iso = p.date.toISOString().slice(0, 10);
+---
+<Base {lang} title={p.title} description={p.dek} alternates={postAlternates(p.slug)} current="writing" type="article">
+  <article>
+    <div class="head">
+      <div class="head-text">
+        <p class="meta-line"><time datetime={iso}>{fmtDate(p.date, lang)}</time>, {weekday(p.date, lang)}. {p.minutes}{NB}{t.minRead}{p.foreign && `, ${t.langName[p.lang]}`}.</p>
+        <h1 class="page-title post-title" lang={fl}>{p.title}</h1>
+        {p.gloss && <p class="gloss-line" lang={lang}>{p.gloss}</p>}
+        {p.dek && <p class="dek-line" lang={fl}>{p.dek}</p>}
+        {p.foreign && <p class="foreign">{t.foreignNote[p.lang]}</p>}
+      </div>
+      <PostOrnament seed={p.seed} size={96} />
+    </div>
+    <div class="read" lang={fl} set:html={html} />
+    <Divider short />
+  </article>
+  <p class="discuss"><a href={site.channelUrl}>{t.discuss}</a></p>
+  {(prev || next) && (
+    <nav class="pn" aria-label={t.otherPosts}>
+      {prev && <div><p class="label">{t.prev}</p><ul class="rows"><li><PostRow post={prev} pageLang={lang} /></li></ul></div>}
+      {next && <div><p class="label">{t.next}</p><ul class="rows"><li><PostRow post={next} pageLang={lang} /></li></ul></div>}
+    </nav>
+  )}
+</Base>
+<style>
+  .head { display: grid; gap: 24px; padding-top: 56px; }
+  .head-text { max-width: 760px; }
+  .meta-line { margin: 0; font-size: 15px; color: var(--muted); }
+  .post-title { margin-top: 12px; }
+  .gloss-line { margin: 6px 0 0; color: var(--muted); }
+  .dek-line { margin: 20px 0 0; font-family: var(--font-serif); font-style: italic; font-size: 22px; line-height: 1.4; }
+  .foreign { margin: 16px 0 0; font-size: 15px; color: var(--muted); }
+  .read { margin-top: 48px; }
+  article :global(.divider) { margin: 40px 0; }
+  .discuss { margin: 40px 0 0; }
+  .discuss a { display: inline-flex; align-items: center; min-height: var(--tap-min); font-weight: 500; }
+  .pn { display: grid; gap: 24px; margin-top: 48px; }
+  .pn .label { margin: 0 0 4px; }
+  @media (min-width: 720px) { .pn { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 900px) { .head { grid-template-columns: minmax(0, 1fr) 120px; gap: 48px; padding-top: 88px; } }
+</style>

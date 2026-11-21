@@ -1,0 +1,33 @@
+{
+  "now": {
+    "updatedAt": "2026-11-19T10:00:00Z",
+    "be": {
+      "body": "Шукаю з камандай такі спосаб працы з агентамі ШІ, які мы абралі б і без хайпу. Перачытваю Бахарэвіча. Пішу першы доўгі тэкст для гэтага сайта."
+    },
+    "en": {
+      "body": "Looking for a way of working with AI agents that my squad would choose even without the hype. Rereading Bakharevich. Writing the first long read for this site."
+    }
+  },
+  "about": {
+    "be": {
+      "intro": "Я беларус, жыву ў Польшчы. Пішу па-беларуску і па-ангельску, а гэты сайт і канал essentis вяду для сябе і для ўсіх, каму цікавыя тыя ж рэчы.\n\nМуж. Чытаю павольна і часта вяртаюся: Бахарэвіч, Караткевіч, кнігі пра тое, як будаваць сыстэмы, якія застаюцца зразумелымі. Слухаю ўсё ад фолку да рэпу.\n\nВандрую, часьцей за ўсё ў горы. Фатаграфіі з паездак трапляюць у канал з подпісам «Месца // Год».",
+      "meaning": "Ступеньчаты ромб: так выглядае поле, калі яго ўткаць у палатно. Сярэдзіна пакінутая пустой наўмысна.\n\nУ беларускім арнамэнце ромб звычайна азначае зямлю і засеянае поле. Чырвоная і чорная ніткі на нефарбаваным льне здаўна спалучаюцца ў беларускай вышыўцы. Назва essentis азначае самае істотнае: тое, што застаецца, калі прыбраць шум.",
+      "workSummary": "Пішу софт з 2019 году: Python, найчасьцей бэкэнд, нямала скрэйпэраў і канвэераў даных, і трохі React, калі больш не было каму. Цяпер Lead Engineer у CluePoints: кірую камандай сэньёр-інжынэраў і вяду ў ёй AI-трансфармацыю.",
+      "bio": "Беларус, які жыве ў Польшчы. Інжынэр, муж, чытач Бахарэвіча і Караткевіча. Слухаю ўсё ад фолку да рэпу і вандрую."
+    },
+    "en": {
+      "intro": "I'm Belarusian and I live in Poland. I write in Belarusian and English, and I keep this site and the essentis channel for myself and for anyone who cares about the same things.\n\nHusband. I read slowly and often return: Bakharevich, Karatkevich, books on building systems that stay understandable. I listen to everything from folk to rap.\n\nI travel, mostly to the mountains. Photos from the trips go to the channel, captioned «Place // Year».",
+      "meaning": "A stepped rhombus, the way a field looks when it is woven into cloth, with the middle left open on purpose.\n\nIn Belarusian ornament the rhombus usually stands for the earth and the sown field. Red and black thread on undyed linen is the classic pair of Belarusian embroidery. The name essentis means the essentials: what is left after the noise.",
+      "workSummary": "I've been writing software since 2019: Python, mostly backends, a fair share of scrapers and data pipelines, and some React when nobody else would. Now I'm a Lead Engineer at CluePoints, where I lead a squad of senior engineers and drive the AI transformation inside it.",
+      "bio": "A Belarusian living in Poland. Engineer, husband, reader of Bakharevich and Karatkevich. I listen to everything from folk to rap, and I travel."
+    }
+  },
+  "uses": {
+    "be": {
+      "body": "Python, FastAPI, Django, PostgreSQL, Docker. Агенты ШІ для руціны, якую раней рабілі рукамі. ADR для ўсяго, што трэба будзе памятаць праз год."
+    },
+    "en": {
+      "body": "Python, FastAPI, Django, PostgreSQL, Docker. AI agents for the chores we used to do by hand. ADRs for anything we will need to remember in a year."
+    }
+  }
+}

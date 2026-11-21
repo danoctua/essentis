@@ -1,0 +1,11 @@
+---
+/** The mark's tiles on a rust disc. Swap for a photo later; the disc stays. */
+import { avatarTiles } from '../lib/graphics';
+interface Props { size?: number }
+const { size = 88 } = Astro.props;
+---
+<svg class="avatar" viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
+  <circle cx="12" cy="12" r="12" fill="var(--rust)" />
+  <path d={avatarTiles()} fill="var(--on-rust)" />
+</svg>
+<style>.avatar { flex: none; }</style>

@@ -1,0 +1,27 @@
+---
+import Mark from './Mark.astro';
+import { routes, type Alternates, type RouteName } from '../lib/routes';
+import { ui, type Lang } from '../data/ui';
+interface Props { lang: Lang; alternates: Alternates; current?: RouteName }
+const { lang, alternates, current } = Astro.props;
+const t = ui[lang];
+const nav: [RouteName, string][] = [['writing', t.writing], ['now', t.now], ['about', t.about]];
+---
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href={routes.home[lang]}><Mark /><span>essentis</span></a>
+    <div class="navs">
+      <nav aria-label={t.sections}>
+        <ul class="nav">
+          {nav.map(([name, label]) => (
+            <li><a href={routes[name][lang]} aria-current={current === name ? 'page' : undefined}>{label}</a></li>
+          ))}
+        </ul>
+      </nav>
+      <ul class="langs" aria-label={t.siteLang}>
+        <li><a href={alternates.be} lang="be" hreflang="be" data-lang-switch="be" aria-current={lang === 'be' ? 'true' : undefined}>Бел</a></li>
+        <li><a href={alternates.en} lang="en" hreflang="en" data-lang-switch="en" aria-current={lang === 'en' ? 'true' : undefined}>Eng</a></li>
+      </ul>
+    </div>
+  </header>
+</div>

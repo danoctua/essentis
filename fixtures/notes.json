@@ -1,0 +1,117 @@
+[
+  {
+    "id": "216",
+    "date": "2026-11-02T12:00:00Z",
+    "text": "Karkonosze // 2026",
+    "place": "Karkonosze",
+    "year": 2026,
+    "photos": [
+      {
+        "key": "fixture/notes/216/0",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/216/1",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/216/2",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/216/3",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/216/4",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/216/5",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/216/6",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/216/7",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/216/8",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/216/9",
+        "w": 1600,
+        "h": 1067
+      }
+    ],
+    "tgUrl": "https://t.me/essentis/216"
+  },
+  {
+    "id": "207",
+    "date": "2026-10-04T12:00:00Z",
+    "text": "Lagow // 2026",
+    "place": "Lagow",
+    "year": 2026,
+    "photos": [
+      {
+        "key": "fixture/notes/207/0",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/207/1",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/207/2",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/207/3",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/207/4",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/207/5",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/207/6",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/207/7",
+        "w": 1600,
+        "h": 1067
+      },
+      {
+        "key": "fixture/notes/207/8",
+        "w": 1600,
+        "h": 1067
+      }
+    ],
+    "tgUrl": "https://t.me/essentis/207"
+  }
+]
