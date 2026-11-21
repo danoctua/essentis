@@ -9,8 +9,9 @@ interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = ui[lang];
 const { now } = await getContent();
-const textLang: Lang = now[lang] ? lang : now.be ? 'be' : 'en';
-const doc = now[textLang];
+const has = (l: Lang) => !!now?.[l]?.body?.trim();
+const textLang: Lang = has(lang) ? lang : has('be') ? 'be' : 'en';
+const doc = now?.[textLang];
 const html = doc ? await renderMarkdown(doc.body, { lang: textLang, now: true }) : '';
 ---
 <Base {lang} title={t.now} alternates={routes.now} current="now">
@@ -18,8 +19,8 @@ const html = doc ? await renderMarkdown(doc.body, { lang: textLang, now: true })
     <h1 class="page-title">{t.now}</h1>
     <p class="intro muted">{t.nowIntro}</p>
     <div class="prose text" lang={textLang !== lang ? textLang : undefined} set:html={html} />
-    {textLang !== lang && <p class="label">{t.notTranslated}</p>}
-    <p class="label">{t.updated(fmtDate(new Date(now.updatedAt), lang))}</p>
+    {doc && textLang !== lang && <p class="label">{t.notTranslated}</p>}
+    {now && <p class="label">{t.updated(fmtDate(new Date(now.updatedAt), lang))}</p>}
   </div>
 </Base>
 <style>

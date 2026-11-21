@@ -212,3 +212,14 @@ Changes from the plan above, made while building:
 - **Footnotes** use remark-gfm's default list for now, labelled in the text's language, with a `↩` back-link that breaks the "no arrows" rule. Phase 2's inline footnotes replace both.
 - **Type check:** `npm run check` is `tsc` over the `.ts` files. `astro check` does not support TypeScript 7 yet, so `.astro` files are not type-checked.
 - **Placeholder years** in Work (`0`) render as `…`.
+
+## Phase 2 notes (done 2026-11-21)
+
+- **Firestore loader:** `src/lib/firestore.ts` reads `posts`, `work`, `projects`, `notes` and `pages/{now,about,uses}` once per build with firebase-admin. Timestamps become ISO strings. `finish()` in `content.ts` is shared by both sources: it drops drafts outside dev, sorts, and **fails the build** on a published post with no title, a bad or duplicate slug, a missing date or an unknown topic, so the live site keeps its previous version. Drafts without a slug get `draft-{id}` on the dev server.
+- **Missing content:** no Now note hides the Now block; no posts shows "Допісаў пакуль няма"; empty Work and Projects hide their section. An empty database builds (8 pages).
+- **Seed:** `npm run seed` (Node, not Python as first planned: firebase-admin is already a dependency) writes Now, About, Uses, the filled-in Work and Projects entries and the Łacinka post **as a draft**. Placeholders and sample posts are skipped; existing documents are never overwritten. `--dry-run` lists what it would write.
+- **Renderer:** Shiki with a css-variables theme (`--code-*` in `global.css`: rust keywords, muted comments, the rest ink). Code is 15 px (drafted 14 px) and footnote markers 15 px (drafted 13 px), so rust text meets the brand's 15 px minimum. Each block is a `figure` with a focusable `role="region"` labelled "Код на Python" and the fence's `title="…"` as caption. The initial letter stays a CSS rule (`.read > p:first-child::first-letter`), no plugin needed.
+- **Footnotes:** the ↩ back-links are gone. Without JS a marker links to the list; with JS it becomes a button that opens the note under its paragraph (`aria-expanded`, `aria-controls`). Fixed a phase 1 bug: sanitize prefixed footnote ids twice, so the links went nowhere.
+- **RSS:** `/rss.xml` and `/en/rss.xml`, full text, every post as shown on that language's pages. Linked from `<head>` and the footer.
+- **OG images:** `/og/{lang}.png` and `/og/{lang}/{slug}.png`, 1200×630, light theme, satori + resvg at build time. satori needs WOFF and one font name per subset to fall back between Latin, Latin Extended and Cyrillic.
+- **Tested** against the Firestore emulator: empty database, seed (twice), publish, a broken post failing the build.

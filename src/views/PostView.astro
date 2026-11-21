@@ -16,7 +16,7 @@ const html = await renderMarkdown(p.body, { lang: p.lang });
 const fl = p.foreign ? p.lang : undefined;
 const iso = p.date.toISOString().slice(0, 10);
 ---
-<Base {lang} title={p.title} description={p.dek} alternates={postAlternates(p.slug)} current="writing" type="article">
+<Base {lang} title={p.title} description={p.dek} alternates={postAlternates(p.slug)} current="writing" type="article" image={`/og/${lang}/${p.slug}.png`}>
   <article>
     <div class="head">
       <div class="head-text">
@@ -28,7 +28,7 @@ const iso = p.date.toISOString().slice(0, 10);
       </div>
       <PostOrnament seed={p.seed} size={96} />
     </div>
-    <div class="read" lang={fl} set:html={html} />
+    <div class="read" lang={fl} data-note-label={t.note} set:html={html} />
     <Divider short />
   </article>
   <p class="discuss"><a href={site.channelUrl}>{t.discuss}</a></p>
@@ -39,6 +39,49 @@ const iso = p.date.toISOString().slice(0, 10);
     </nav>
   )}
 </Base>
+<script>
+  // Footnotes open in place: each marker becomes a button that shows its note under the paragraph.
+  // Without JS the marker stays a link to the list at the end.
+  for (const read of document.querySelectorAll<HTMLElement>('.read')) {
+    const label = read.dataset.noteLabel ?? '';
+    read.querySelectorAll<HTMLAnchorElement>('a[data-footnote-ref]').forEach((a, i) => {
+      const item = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+      const sup = a.parentElement;
+      if (!item || !sup) return;
+      const n = a.textContent ?? String(i + 1);
+      const box = document.createElement('div');
+      box.className = 'fn-open';
+      box.id = `fn-open-${i + 1}`;
+      box.setAttribute('role', 'note');
+      box.hidden = true;
+      for (const child of item.children) box.append(child.cloneNode(true));
+      const num = document.createElement('span');
+      num.className = 'fn-num';
+      num.textContent = `${n}\u00a0`;
+      (box.firstElementChild ?? box).prepend(num);
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'fn';
+      button.textContent = n;
+      button.setAttribute('aria-expanded', 'false');
+      button.setAttribute('aria-controls', box.id);
+      button.setAttribute('aria-label', `${label} ${n}`);
+      button.addEventListener('click', () => {
+        const open = button.getAttribute('aria-expanded') !== 'true';
+        button.setAttribute('aria-expanded', String(open));
+        box.hidden = !open;
+      });
+      sup.replaceWith(button);
+      const block = button.closest('p, li, td, th, blockquote');
+      if (block?.tagName === 'P') {
+        // Several notes in one paragraph open in their own order.
+        let after: Element = block;
+        while (after.nextElementSibling?.classList.contains('fn-open')) after = after.nextElementSibling;
+        after.after(box);
+      } else (block ?? read).append(box);
+    });
+  }
+</script>
 <style>
   .head { display: grid; gap: 24px; padding-top: 56px; }
   .head-text { max-width: 760px; }

@@ -18,6 +18,12 @@ npm run build:fixtures   # full static build with sample content
 
 A plain `npm run build` reads Firestore and fails without `FIREBASE_SERVICE_ACCOUNT`, so a deploy can never ship sample posts. A production deploy also refuses `USE_FIXTURES`.
 
+### First content in Firestore
+
+`npm run seed -- --dry-run` lists what would be written; `npm run seed` writes it. It needs `FIREBASE_SERVICE_ACCOUNT` in `.env`, creates only documents that do not exist yet, and adds the Łacinka post as a draft: set its `status` to `published` in the Firebase console (or, from phase 3, in `/admin`) when it should go live.
+
+To try changes against a local database instead, run the Firestore emulator (`npx firebase-tools emulators:start --only firestore --project demo-essentis`) and set `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080` (or the port it prints) before `npm run seed` or `npm run build`.
+
 Regenerate generated files after changing their source:
 
 - `npm run tokens` writes `src/styles/tokens.css` from `design/tokens.json`.
@@ -35,7 +41,11 @@ Regenerate generated files after changing their source:
 | `src/lib/markdown.ts` | The one Markdown renderer (site and admin preview) |
 | `src/lib/graphics.ts`, `ornament.ts` | Mark, avatar, woven band, divider, per-post ornament |
 | `fixtures/` | Sample content for dev and CI only |
-| `tools/` | Telegram sync and seed scripts (Python, later phases) |
+| `src/lib/firestore.ts` | Reads Firestore at build time |
+| `src/lib/og.ts`, `src/pages/og/` | Link preview images |
+| `src/lib/feed.ts` | RSS feeds (`/rss.xml`, `/en/rss.xml`) |
+| `scripts/seed.mjs` | Writes the first content into an empty Firestore |
+| `tools/` | Telegram sync (Python, phase 4) |
 | `sessions/` | Telethon login session. Git-ignored; never commit or upload it |
 
 ## Setup: what to configure, what to provide, and where

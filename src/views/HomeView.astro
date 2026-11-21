@@ -35,7 +35,7 @@ const other: Lang = lang === 'be' ? 'en' : 'be';
       <div class="prose bio" set:html={bio} />
       <p class="more"><a href={routes.about[lang]}>{t.moreAboutMe}</a></p>
     </div>
-    <NowBlock now={c.now} {lang} />
+    {c.now && <NowBlock now={c.now} {lang} />}
   </section>
 
   <WovenBand />
@@ -43,9 +43,9 @@ const other: Lang = lang === 'be' ? 'en' : 'be';
   <div class="lower">
     <section aria-labelledby="latest-h">
       <div class="sechead"><h2 id="latest-h" class="h2">{t.latest}</h2><a href={routes.writing[lang]}>{t.allPosts}</a></div>
-      <ul class="rows">
-        {latest.map((p) => <li><PostRow post={p} pageLang={lang} /></li>)}
-      </ul>
+      {latest.length > 0
+        ? <ul class="rows">{latest.map((p) => <li><PostRow post={p} pageLang={lang} /></li>)}</ul>
+        : <p class="muted">{t.noPostsYet}</p>}
     </section>
     {albums.length > 0 && (
       <section aria-labelledby="chan-h">

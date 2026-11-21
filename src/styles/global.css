@@ -20,6 +20,15 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .muted { color: var(--muted); }
 .visually-hidden, .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+/* Code colours for Shiki's css-variables theme. Rust only for keywords; everything else stays ink or muted. */
+:root {
+  --code-foreground: var(--ink); --code-background: transparent;
+  --code-token-keyword: var(--rust); --code-token-comment: var(--muted);
+  --code-token-string: var(--ink); --code-token-string-expression: var(--ink); --code-token-constant: var(--ink);
+  --code-token-function: var(--ink); --code-token-parameter: var(--ink); --code-token-punctuation: var(--muted);
+  --code-token-link: var(--rust); --code-token-inserted: var(--ink); --code-token-deleted: var(--muted); --code-token-changed: var(--ink);
+}
+
 /* Header */
 .top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 24px; padding-block: 20px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; min-height: var(--tap-min); text-decoration: none; font-size: 18px; font-weight: 500; }
@@ -75,11 +84,25 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .read h3 { font-size: 18px; }
 .read blockquote { margin-left: 0; padding-left: 20px; font-style: italic; color: var(--muted); }
 .read img { border-radius: var(--radius-lg); height: auto; }
-.read pre { overflow-x: auto; margin: 28px 0; padding: 16px 18px; background: var(--paper-raised); border-radius: var(--radius-md); box-shadow: inset 0 0 0 1px var(--line); font-family: var(--font-mono); font-size: 14px; line-height: 1.6; }
 .read code { font-family: var(--font-mono); font-size: 0.8em; }
-.read pre code { font-size: inherit; }
-.read sup a { font-family: var(--font-sans); font-size: 13px; font-weight: 500; color: var(--rust); text-decoration: none; padding: 0 2px; }
+/* Code: a figure with a scrollable, focusable region and an optional caption. 15 px so rust keywords meet the brand's minimum. */
+.read .code-block { margin: 28px 0; font-family: var(--font-sans); }
+.read .code { overflow-x: auto; background: var(--paper-raised); border-radius: var(--radius-md); box-shadow: inset 0 0 0 1px var(--line); }
+.read .code pre { width: max-content; min-width: 100%; margin: 0; padding: 16px 18px; font-family: var(--font-mono); font-size: 15px; line-height: 1.6; }
+.read .code pre code { font-size: inherit; }
+.read .code-block figcaption { margin-top: 8px; font-size: 15px; line-height: 1.45; color: var(--muted); }
+/* Footnote markers: a link to the list without JS, a toggle button (.fn) with it. */
+.read sup { line-height: 0; }
+.read sup a, .read .fn { font-family: var(--font-sans); font-size: 15px; font-weight: 500; font-style: normal; line-height: 1; color: var(--rust); text-decoration: none; }
+.read sup a { padding: 0 2px; }
+.read .fn { position: relative; top: -0.45em; margin: -12px -4px; padding: 12px 8px; }
+.read .fn[aria-expanded="true"] { text-decoration: underline; text-underline-offset: 3px; }
+.read .fn-open { margin: -8px 0 20px; padding: 12px 16px; background: var(--paper-raised); border-radius: var(--radius-md); font-size: 17px; line-height: 1.5; }
+.read .fn-open p { margin: 0 0 8px; }
+.read .fn-open > :last-child { margin-bottom: 0; }
+.read .fn-num { color: var(--rust); font-family: var(--font-sans); font-size: 15px; font-weight: 500; }
 .read .footnotes { margin-top: 40px; font-family: var(--font-sans); font-size: 15px; line-height: 1.5; color: var(--muted); }
 .read .footnotes h2 { position: static; width: auto; height: auto; margin: 0 0 4px; clip: auto; overflow: visible; white-space: normal; font-size: 15px; color: var(--ink); }
 .read .footnotes ol { padding-left: 1.2em; }
+.read .footnotes li:target { color: var(--ink); }
 .read .footnotes p { margin: 0 0 8px; }

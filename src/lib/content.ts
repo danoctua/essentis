@@ -1,11 +1,11 @@
 /**
- * Content source for the build. Production reads Firestore (phase 2). Sample content in
+ * Content source for the build. Production reads Firestore (src/lib/firestore.ts). Sample content in
  * fixtures/ is opt-in only (USE_FIXTURES=1, or the dev server without credentials), so a deploy with missing
  * credentials fails loudly instead of shipping sample posts.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Lang, Topic } from '../data/ui';
+import { LANGS, TOPICS, type Lang, type Topic } from '../data/ui';
 
 export interface Variant { title: string; dek?: string; body?: string }
 export interface Media { key: string; w: number; h: number; alt?: string }
@@ -32,7 +32,8 @@ export interface Note { id: string; date: string; text: string; place?: string; 
 
 export interface Content {
   posts: Post[];
-  now: NowPage;
+  /** null until the Now note is written. */
+  now: NowPage | null;
   about: AboutPage;
   uses: UsesPage;
   work: Work[];
@@ -56,36 +57,87 @@ export function pickSource(env: Record<string, string | undefined>, dev: boolean
   return 'firestore';
 }
 
-function readFixtures(): Content {
+/** What a source returns before checking: pages may be missing and fields loosely typed. */
+export interface RawContent {
+  posts: Partial<Post>[];
+  now?: Partial<NowPage>;
+  about?: AboutPage;
+  uses?: UsesPage;
+  work: Partial<Work>[];
+  projects: Partial<Project>[];
+  notes: Partial<Note>[];
+}
+
+function readFixtures(): RawContent {
   const read = <T>(name: string): T => JSON.parse(readFileSync(join(process.cwd(), 'fixtures', `${name}.json`), 'utf8'));
   return {
     posts: read('posts'),
-    ...read<Pick<Content, 'now' | 'about' | 'uses'>>('pages'),
+    ...read<Pick<RawContent, 'now' | 'about' | 'uses'>>('pages'),
     work: read('work'),
     projects: read('projects'),
     notes: read('notes'),
   };
 }
 
+const validDate = (s: unknown): s is string => typeof s === 'string' && !Number.isNaN(Date.parse(s));
+const hasText = (d?: { body?: string }) => !!d?.body?.trim();
+
+/**
+ * Checks posts that will be shown and puts everything in display order. A published post with a
+ * missing title, slug or date fails the build, so the live site keeps its previous version instead
+ * of showing a broken page. Drafts appear only on the dev server.
+ */
+export function finish(raw: RawContent, dev: boolean): Content {
+  const posts: Post[] = [];
+  const slugs = new Map<string, string>();
+  for (const r of raw.posts) {
+    const id = r.id ?? '?';
+    if (r.status !== 'published' && !dev) continue;
+    const fail = (why: string) => { throw new Error(`Post ${id}: ${why}. Fix it in /admin or the Firebase console, then publish again.`); };
+    const p = { topics: [], variants: {}, ...r } as Post;
+    if (!LANGS.includes(p.originalLang)) fail(`originalLang must be "be" or "en"`);
+    if (!p.variants[p.originalLang]?.title?.trim()) fail(`no ${p.originalLang} title`);
+    if (!p.slug && dev) p.slug = `draft-${id}`; // slugs are set on first publish
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(p.slug ?? '')) fail(`slug "${p.slug ?? ''}" must be lowercase ASCII words joined by hyphens`);
+    if (!validDate(p.publishedAt)) fail('publishedAt is missing or not a date');
+    if (!validDate(p.updatedAt)) p.updatedAt = p.publishedAt;
+    const unknown = p.topics.filter((t) => !TOPICS.includes(t));
+    if (unknown.length) fail(`unknown topics ${unknown.join(', ')} (known: ${TOPICS.join(', ')})`);
+    if (slugs.has(p.slug)) fail(`slug "${p.slug}" is also used by post ${slugs.get(p.slug)}`);
+    slugs.set(p.slug, id);
+    posts.push(p);
+  }
+  const now = raw.now && (hasText(raw.now.be) || hasText(raw.now.en))
+    ? { ...raw.now, updatedAt: validDate(raw.now.updatedAt) ? raw.now.updatedAt : new Date().toISOString() } as NowPage
+    : null;
+  const ordered = <T extends { order?: number }>(xs: T[]) => [...xs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  return {
+    posts: posts.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)),
+    now,
+    about: raw.about ?? {},
+    uses: raw.uses ?? {},
+    work: ordered(raw.work).filter((w): w is Work => !!w.role && !!w.company).map((w) => ({ ...w, line: w.line ?? {} })),
+    projects: ordered(raw.projects).filter((p): p is Project => !!p.name).map((p) => ({ ...p, text: p.text ?? {} })),
+    notes: raw.notes
+      .filter((n): n is Note => !n.hidden && validDate(n.date) && !!n.tgUrl)
+      .map((n) => ({ ...n, text: n.text ?? '', photos: n.photos ?? [] }))
+      .sort((a, b) => b.date.localeCompare(a.date)),
+  };
+}
+
 let cached: Promise<Content> | undefined;
 
-/** All content, loaded once per build. Drafts and hidden notes are removed outside the dev server. */
+/** All content, loaded once per build. */
 export function getContent(): Promise<Content> {
   cached ??= (async () => {
     const dev = import.meta.env.DEV;
     // .env values arrive on import.meta.env; Vercel's variables on process.env.
-    const source = pickSource({ ...import.meta.env, ...process.env }, dev);
-    if (source === 'firestore') throw new Error('The Firestore loader arrives in phase 2. Build with USE_FIXTURES=1 for now.');
-    const c = readFixtures();
-    return {
-      ...c,
-      posts: c.posts
-        .filter((p) => dev || p.status === 'published')
-        .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)),
-      work: [...c.work].sort((a, b) => a.order - b.order),
-      projects: [...c.projects].sort((a, b) => a.order - b.order),
-      notes: c.notes.filter((n) => !n.hidden).sort((a, b) => b.date.localeCompare(a.date)),
-    };
+    const env: Record<string, string | undefined> = { ...import.meta.env, ...process.env };
+    const source = pickSource(env, dev);
+    const raw = source === 'firestore'
+      ? await (await import('./firestore')).readFirestore(env.FIREBASE_SERVICE_ACCOUNT!)
+      : readFixtures();
+    return finish(raw, dev);
   })();
   return cached;
 }

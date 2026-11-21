@@ -18,7 +18,8 @@ const used = TOPICS.filter((k) => posts.some((p) => p.topics.includes(k)));
     <h1 class="page-title">{t.writing}</h1>
     <p class="intro muted">{t.writingIntro}</p>
     {/* Filter needs JS; hidden until the script shows it, so the list never looks broken without it. */}
-    <div class="chips" role="group" aria-label={t.topic} hidden data-chips>
+    {posts.length === 0 && <p class="empty muted">{t.noPostsYet}</p>}
+    <div class="chips" role="group" aria-label={t.topic} hidden data-chips={used.length > 1 ? '' : undefined}>
       <button type="button" class="chip" aria-pressed="true" data-topic="">{t.allTopics}</button>
       {used.map((k) => <button type="button" class="chip" aria-pressed="false" data-topic={k}>{topicLabels[lang][k]}</button>)}
     </div>

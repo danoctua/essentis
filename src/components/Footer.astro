@@ -1,7 +1,8 @@
 ---
 import Divider from './Divider.astro';
 import { site } from '../lib/site';
-import type { Lang } from '../data/ui';
+import { feeds } from '../lib/feed';
+import { ui, type Lang } from '../data/ui';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 ---
@@ -10,6 +11,7 @@ const { lang } = Astro.props;
   <footer class="foot">
     <ul>
       {site.links.map((l) => <li><a href={l.href}>{l.label[lang]}</a></li>)}
+      <li><a href={feeds[lang]}>{ui[lang].feed}</a></li>
     </ul>
     <p>essentis, {new Date().getFullYear()}</p>
   </footer>

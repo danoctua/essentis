@@ -26,27 +26,27 @@ const span = (from: number, to?: number | null) => `${yr(from)}–${to === null 
       <div class="title-row"><Avatar size={64} /><h1 class="page-title">{t.about}</h1></div>
       <div class="prose lead" set:html={intro} />
 
-      <section class="sec" aria-labelledby="work-h">
+      {(summary || c.work.length > 0 || c.projects.length > 0) && <section class="sec" aria-labelledby="work-h">
         <h2 id="work-h" class="h2">{t.work}</h2>
         <div class="prose" set:html={summary} />
-        <ul class="years">
+        {c.work.length > 0 && <ul class="years">
           {c.work.map((w) => (
             <li>
               <span class="muted num">{span(w.from, w.to)}</span>
               <span><span class="strong">{w.role}, {w.company}</span><span class="muted small">{w.line[lang] ?? w.line.be}</span></span>
             </li>
           ))}
-        </ul>
+        </ul>}
         {c.projects.length > 0 && <h3 class="h3">{t.projects}</h3>}
-        <ul class="years one">
+        {c.projects.length > 0 && <ul class="years one">
           {c.projects.map((p) => (
             <li><span>
               {p.url ? <a class="strong" href={p.url}>{p.name}</a> : <span class="strong">{p.name}</span>}
               <span class="muted small">{p.text[lang] ?? p.text.be}</span>
             </span></li>
           ))}
-        </ul>
-      </section>
+        </ul>}
+      </section>}
 
       {usesHtml && (
         <section class="sec" aria-labelledby="uses-h">

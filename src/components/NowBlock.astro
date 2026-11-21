@@ -5,8 +5,9 @@ import type { NowPage } from '../lib/content';
 interface Props { now: NowPage; lang: Lang }
 const { now, lang } = Astro.props;
 const t = ui[lang];
-const doc = now[lang] ?? now.be ?? now.en;
-const textLang: Lang = now[lang] ? lang : now.be ? 'be' : 'en';
+const has = (l: Lang) => !!now[l]?.body?.trim();
+const textLang: Lang = has(lang) ? lang : has('be') ? 'be' : 'en';
+const doc = now[textLang];
 const html = doc ? await renderMarkdown(doc.body, { lang: textLang, now: true }) : '';
 ---
 <section id="now" class="now" aria-labelledby="now-h">

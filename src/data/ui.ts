@@ -14,7 +14,9 @@ export const ui = {
     langName: { be: 'па-беларуску', en: 'па-ангельску' },
     foreignNote: { be: 'Гэты допіс па-беларуску.', en: 'Гэты допіс па-ангельску.' },
     min: 'хв', minRead: 'хв чытаньня', photos: 'фота',
-    notes: 'Заўвагі', backToText: 'Вярнуцца да тэксту', prev: 'Папярэдні допіс', next: 'Наступны допіс', otherPosts: 'Іншыя допісы',
+    notes: 'Заўвагі', note: 'Заўвага', backToText: 'Вярнуцца да тэксту',
+    codeIn: (name?: string) => (name ? `Код на ${name}` : 'Код'),
+    noPostsYet: 'Допісаў пакуль няма.', feed: 'RSS', feedTitle: 'essentis: допісы Данііла М.', prev: 'Папярэдні допіс', next: 'Наступны допіс', otherPosts: 'Іншыя допісы',
     discuss: 'Абмеркаваць у канале essentis',
     topic: 'Тэма', allTopics: 'Усе', noPostsForTopic: 'Пакуль няма допісаў на гэтую тэму.',
     writingIntro: 'Доўгія тэксты пра інжынэрыю і кіраваньне, ШІ, беларускую мову і культуру, кнігі, музыку і падарожжы. Па-беларуску і па-ангельску.',
@@ -22,6 +24,7 @@ export const ui = {
     notTranslated: 'Гэты тэкст яшчэ не перакладзены.',
     updated: (d: string) => `Абноўлена ${d}`,
     siteDescription: 'Нататкі пра інжынэрыю, беларускую культуру, кнігі і музыку. Данііл М.',
+    tagline: 'Нататкі пра інжынэрыю, беларускую культуру, кнігі і музыку.',
   },
   en: {
     skip: 'Skip to content', sections: 'Sections', siteLang: 'Site language',
@@ -33,7 +36,9 @@ export const ui = {
     langName: { be: 'in Belarusian', en: 'in English' },
     foreignNote: { be: 'This post is in Belarusian.', en: 'This post is in English.' },
     min: 'min', minRead: 'min read', photos: 'photos',
-    notes: 'Notes', backToText: 'Back to the text', prev: 'Previous post', next: 'Next post', otherPosts: 'More writing',
+    notes: 'Notes', note: 'Note', backToText: 'Back to the text',
+    codeIn: (name?: string) => (name ? `${name} code` : 'Code'),
+    noPostsYet: 'No posts yet.', feed: 'RSS', feedTitle: 'essentis: writing by Daniił M.', prev: 'Previous post', next: 'Next post', otherPosts: 'More writing',
     discuss: 'Discuss on the essentis channel',
     topic: 'Topic', allTopics: 'All', noPostsForTopic: 'No posts on this topic yet.',
     writingIntro: 'Long reads on engineering and leadership, AI, Belarusian language and culture, books, music and travel. In Belarusian and English.',
@@ -41,6 +46,7 @@ export const ui = {
     notTranslated: 'This text is not translated yet.',
     updated: (d: string) => `Updated ${d}`,
     siteDescription: 'Notes on engineering, Belarusian culture, books and music, by Daniił M.',
+    tagline: 'Notes on engineering, Belarusian culture, books and music.',
   },
 } as const;
 

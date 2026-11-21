@@ -10,20 +10,26 @@
     "preview": "astro preview",
     "test": "vitest run",
     "check": "tsc --noEmit -p .",
+    "seed": "node --env-file-if-exists=.env scripts/seed.mjs",
     "tokens": "node scripts/tokens.mjs",
     "fonts": "node scripts/fonts.mjs"
   },
   "dependencies": {
+    "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.6",
     "@fontsource/alegreya": "^5.3.0",
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "@fontsource/ibm-plex-sans": "^5.3.0",
+    "@resvg/resvg-js": "^2.6.2",
     "astro": "^7.4.13",
+    "firebase-admin": "^14.5.1",
     "rehype-sanitize": "^6.0.0",
     "rehype-stringify": "^10.0.1",
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.1.2",
+    "satori": "^0.63.2",
+    "shiki": "^4.6.0",
     "unified": "^11.0.5"
   },
   "devDependencies": {

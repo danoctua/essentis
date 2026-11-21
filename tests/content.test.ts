@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { pickSource, type Post } from '../src/lib/content';
+import { finish, pickSource, type Post, type RawContent } from '../src/lib/content';
+import { parseServiceAccount, plain } from '../src/lib/firestore';
 import { postView, readingMinutes } from '../src/lib/view';
 import { renderMarkdown } from '../src/lib/markdown';
 
@@ -46,8 +47,83 @@ describe('renderMarkdown', () => {
     const html = await renderMarkdown('A[^1]\n\n[^1]: note', { lang: 'be' });
     expect(html).toContain('Заўвагі');
   });
+  it('links each footnote marker to its note, with no back-arrow', async () => {
+    const html = await renderMarkdown('A[^1]\n\n[^1]: note', { lang: 'en' });
+    const href = /href="#([^"]+)"[^>]*data-footnote-ref/.exec(html)?.[1];
+    expect(href).toBeTruthy();
+    expect(html).toContain(`id="${href}"`);
+    expect(html).not.toMatch(/data-footnote-backref|↩/);
+  });
+  it('turns a fenced block into a labelled, focusable region with a caption', async () => {
+    const html = await renderMarkdown('```py title="Зычныя"\ndef f(): pass\n```', { lang: 'be' });
+    expect(html).toMatch(/<figure class="code-block"><div class="code" tabindex="0" role="region" aria-label="Код на Python">/);
+    expect(html).toContain('<figcaption>Зычныя</figcaption>');
+    expect(html).toContain('var(--code-token-keyword)');
+  });
+  it('escapes code in an unknown language and still labels it', async () => {
+    const html = await renderMarkdown('```brainfun\n<script>x</script>\n```', { lang: 'en' });
+    expect(html).toContain('aria-label="Code"');
+    expect(html).not.toContain('<script>');
+  });
   it('strips raw HTML', async () => {
     const html = await renderMarkdown('<script>alert(1)</script>ok', { lang: 'en' });
     expect(html).not.toContain('<script');
+  });
+});
+
+const post = (over: Partial<Post>): Partial<Post> => ({
+  id: 'a', originalLang: 'be', slug: 'a', topics: ['books'], status: 'published', publishedAt: '2026-11-01T00:00:00Z',
+  updatedAt: '2026-11-01T00:00:00Z', variants: { be: { title: 'Назва', body: 'Тэкст' } }, ...over,
+});
+const raw = (posts: Partial<Post>[], extra: Partial<RawContent> = {}): RawContent => ({ posts, work: [], projects: [], notes: [], ...extra });
+
+describe('finish', () => {
+  it('drops drafts from builds, keeps them on the dev server', () => {
+    const r = raw([post({}), post({ id: 'd', slug: undefined, status: 'draft' })]);
+    expect(finish(r, false).posts.map((p) => p.id)).toEqual(['a']);
+    expect(finish(r, true).posts.map((p) => p.slug)).toEqual(['a', 'draft-d']);
+  });
+  it('sorts posts newest first', () => {
+    const r = raw([post({}), post({ id: 'b', slug: 'b', publishedAt: '2026-11-05T00:00:00Z' })]);
+    expect(finish(r, false).posts.map((p) => p.id)).toEqual(['b', 'a']);
+  });
+  it.each([
+    ['a missing title', { variants: { be: { title: ' ' } } }, /no be title/],
+    ['a bad slug', { slug: 'Łacinka' }, /slug/],
+    ['a missing date', { publishedAt: undefined }, /publishedAt/],
+    ['an unknown topic', { topics: ['cats'] as never }, /unknown topics cats/],
+  ])('fails the build on a published post with %s', (_, over, msg) => {
+    expect(() => finish(raw([post(over as Partial<Post>)]), false)).toThrow(msg);
+  });
+  it('fails the build on a duplicate slug', () =>
+    expect(() => finish(raw([post({}), post({ id: 'b' })]), false)).toThrow(/also used by post a/));
+  it('treats an empty Now note as missing', () => {
+    expect(finish(raw([]), false).now).toBeNull();
+    expect(finish(raw([], { now: { be: { body: ' ' } } }), false).now).toBeNull();
+    expect(finish(raw([], { now: { be: { body: 'Цяпер' } } }), false).now?.be?.body).toBe('Цяпер');
+  });
+  it('skips incomplete Work entries and hidden notes', () => {
+    const c = finish(raw([], {
+      work: [{ id: 'w', role: 'Lead', company: 'X', from: 2020, order: 1 }, { id: 'e', order: 0 }],
+      notes: [{ id: 'n', date: '2026-01-01T00:00:00Z', tgUrl: 'https://t.me/essentis/1', hidden: true }],
+    }), false);
+    expect(c.work.map((w) => w.id)).toEqual(['w']);
+    expect(c.notes).toEqual([]);
+  });
+});
+
+describe('Firestore helpers', () => {
+  it('turns Timestamps into ISO strings at any depth', () => {
+    const ts = { toDate: () => new Date('2026-11-12T09:00:00Z') };
+    expect(plain({ a: ts, b: [{ c: ts }], d: 'x', e: null })).toEqual({ a: '2026-11-12T09:00:00.000Z', b: [{ c: '2026-11-12T09:00:00.000Z' }], d: 'x', e: null });
+  });
+  it('reads the service account as base64 or raw JSON', () => {
+    const sa = { project_id: 'p', client_email: 'e', private_key: 'k' };
+    expect(parseServiceAccount(Buffer.from(JSON.stringify(sa)).toString('base64'))).toMatchObject(sa);
+    expect(parseServiceAccount(JSON.stringify(sa))).toMatchObject(sa);
+  });
+  it('explains a broken service account value', () => {
+    expect(() => parseServiceAccount('not base64 json')).toThrow(/base64/);
+    expect(() => parseServiceAccount(Buffer.from('{}').toString('base64'))).toThrow(/project_id/);
   });
 });
