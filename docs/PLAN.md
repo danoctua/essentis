@@ -223,3 +223,15 @@ Changes from the plan above, made while building:
 - **RSS:** `/rss.xml` and `/en/rss.xml`, full text, every post as shown on that language's pages. Linked from `<head>` and the footer.
 - **OG images:** `/og/{lang}.png` and `/og/{lang}/{slug}.png`, 1200×630, light theme, satori + resvg at build time. satori needs WOFF and one font name per subset to fall back between Latin, Latin Extended and Cyrillic.
 - **Tested** against the Firestore emulator: empty database, seed (twice), publish, a broken post failing the build.
+
+## Phase 3 notes (done 2026-11-22)
+
+- **Access:** a custom claim `admin: true` (set by `npm run admin:grant -- email`) instead of `ADMIN_UID`, so no user id sits in the public repo and the rules stay a static file. `firestore.rules` and the API routes check the same claim. The admin tells apart "no access" (shows the grant command) and "rules not published yet".
+- **Adapter:** `@astrojs/vercel`; everything is still prerendered except `/api/media/sign/` and `/api/publish/` (trailing slash, like every URL). `astro preview` does not work with the adapter: `npm run preview` serves `.vercel/output/static` instead.
+- **Admin:** Preact app on `/admin/` (`client:only`, `noindex`), hash routes. Google sign-in with a popup. Shows the account's email only; nothing from the Google profile is stored.
+- **Posts:** both languages in tabs, topics, date, cover with alt text, CodeMirror 6 beside a live preview rendered by the site's own `markdown.ts` and CSS. "Апублікаваць" runs the build's check (`postProblem`, shared in `src/lib/postCheck.ts`) and, the first time, sets the frozen slug (`makeSlug`: never empty, ≤ 80 chars, unique) and the date. Drafts with problems are skipped on the dev server instead of stopping it.
+- **Images:** resized in the browser to WebP at 400/800/1600 and redrawn on a canvas, so no EXIF (GPS) is uploaded. Keys are `posts/{postId}/{hash}-{w}x{h}-{width}.webp`; the renderer reads the size from the name and adds width, height, `srcset` and lazy loading. The sign route only issues ten-minute PUT URLs for that key pattern and `image/webp`.
+- **Publish:** "Абнавіць сайт" calls the deploy hook through `/api/publish/`, at most once a minute (kept in Firestore `meta/publish`, with the last time shown in the admin).
+- **Now, About, Uses, Work, Projects:** forms with Markdown fields; the Now editor counts words and warns above 150.
+- **Also:** code blocks and headings clear the drop cap.
+- **Tested** against the Auth and Firestore emulators: rules tests (owner, other account, visitor); a browser run at 1400 and 390 px covering sign-in, the no-access screen, granting, writing, preview, image paste (R2 intercepted: three WebP files, no EXIF, hash-named), publishing and the once-a-minute limit, Now and Work saves.

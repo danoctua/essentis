@@ -15,6 +15,8 @@ import { createCssVariablesTheme, createHighlighter, type Highlighter } from 'sh
 import type { Element, ElementContent, Root, RootContent } from 'hast';
 import type { Root as MdRoot, RootContent as MdContent } from 'mdast';
 import { ui, type Lang } from '../data/ui';
+import { MEDIA_URL } from './site';
+import { mediaFile, parseMediaUrl, WIDTHS } from './media';
 
 /** Elements the Now note may not contain: it is plain prose and lists. */
 const NOW_BLOCKED = ['img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'pre', 'code', 'hr'];
@@ -109,6 +111,39 @@ function rehypeFootnotes() {
   };
 }
 
+// ---------- Images ----------
+
+/**
+ * Our own photos (on MEDIA_URL, named with their size) get width and height, so the page does not
+ * jump while they load, plus a srcset of the three stored widths and lazy loading. Other images
+ * are left as written.
+ */
+function rehypeImages() {
+  return (tree: Root) => {
+    const visit = (parent: Root | Element) => {
+      for (const n of parent.children) {
+        if (n.type !== 'element') continue;
+        if (n.tagName === 'img' && typeof n.properties.src === 'string') {
+          const m = parseMediaUrl(n.properties.src, MEDIA_URL);
+          if (m) {
+            const at = (w: number) => Math.min(w, m.w);
+            const width = at(1600);
+            const set = new Map(WIDTHS.map((w) => [at(w), `${MEDIA_URL}/${mediaFile(m.base, w)} ${at(w)}w`]));
+            Object.assign(n.properties, {
+              src: `${MEDIA_URL}/${mediaFile(m.base, 800)}`,
+              srcSet: [...set.values()].join(', '),
+              sizes: '(min-width: 760px) 680px, calc(100vw - 32px)',
+              width, height: Math.round((m.h * width) / m.w), loading: 'lazy', decoding: 'async',
+            });
+          }
+        }
+        visit(n);
+      }
+    };
+    visit(tree);
+  };
+}
+
 // ---------- Render ----------
 
 // remark-rehype already prefixes footnote ids and their links with "user-content-"; sanitize must not
@@ -132,6 +167,7 @@ export async function renderMarkdown(src: string, { lang, now = false }: RenderO
     .use(remarkRehype, { footnoteLabel: ui[lang].notes })
     .use(rehypeSanitize, now ? nowSchema : schema)
     .use(rehypeFootnotes)
+    .use(rehypeImages)
     .use(now ? [] : [[rehypeCode, lang]])
     .use(rehypeStringify)
     .process(src);

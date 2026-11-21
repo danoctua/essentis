@@ -86,7 +86,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .read img { border-radius: var(--radius-lg); height: auto; }
 .read code { font-family: var(--font-mono); font-size: 0.8em; }
 /* Code: a figure with a scrollable, focusable region and an optional caption. 15 px so rust keywords meet the brand's minimum. */
-.read .code-block { margin: 28px 0; font-family: var(--font-sans); }
+.read .code-block { clear: both; margin: 28px 0; font-family: var(--font-sans); }
+.read h2, .read h3, .read blockquote, .read img, .read ul, .read ol { clear: both; }
 .read .code { overflow-x: auto; background: var(--paper-raised); border-radius: var(--radius-md); box-shadow: inset 0 0 0 1px var(--line); }
 .read .code pre { width: max-content; min-width: 100%; margin: 0; padding: 16px 18px; font-family: var(--font-mono); font-size: 15px; line-height: 1.6; }
 .read .code pre code { font-size: inherit; }

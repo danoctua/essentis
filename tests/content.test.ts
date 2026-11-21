@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { finish, pickSource, type Post, type RawContent } from '../src/lib/content';
-import { parseServiceAccount, plain } from '../src/lib/firestore';
+import { parseServiceAccount } from '../src/lib/firebaseAdmin';
+import { plain } from '../src/lib/firestore';
 import { postView, readingMinutes } from '../src/lib/view';
 import { renderMarkdown } from '../src/lib/markdown';
 

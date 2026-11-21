@@ -5,7 +5,8 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { LANGS, TOPICS, type Lang, type Topic } from '../data/ui';
+import type { Lang, Topic } from '../data/ui';
+import { postProblem } from './postCheck';
 
 export interface Variant { title: string; dek?: string; body?: string }
 export interface Media { key: string; w: number; h: number; alt?: string }
@@ -85,25 +86,25 @@ const hasText = (d?: { body?: string }) => !!d?.body?.trim();
 /**
  * Checks posts that will be shown and puts everything in display order. A published post with a
  * missing title, slug or date fails the build, so the live site keeps its previous version instead
- * of showing a broken page. Drafts appear only on the dev server.
+ * of showing a broken page. Drafts appear only on the dev server, and an unfinished draft is
+ * skipped there with a warning rather than stopping the server.
  */
 export function finish(raw: RawContent, dev: boolean): Content {
   const posts: Post[] = [];
   const slugs = new Map<string, string>();
   for (const r of raw.posts) {
     const id = r.id ?? '?';
-    if (r.status !== 'published' && !dev) continue;
-    const fail = (why: string) => { throw new Error(`Post ${id}: ${why}. Fix it in /admin or the Firebase console, then publish again.`); };
+    const draft = r.status !== 'published';
+    if (draft && !dev) continue;
     const p = { topics: [], variants: {}, ...r } as Post;
-    if (!LANGS.includes(p.originalLang)) fail(`originalLang must be "be" or "en"`);
-    if (!p.variants[p.originalLang]?.title?.trim()) fail(`no ${p.originalLang} title`);
-    if (!p.slug && dev) p.slug = `draft-${id}`; // slugs are set on first publish
-    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(p.slug ?? '')) fail(`slug "${p.slug ?? ''}" must be lowercase ASCII words joined by hyphens`);
-    if (!validDate(p.publishedAt)) fail('publishedAt is missing or not a date');
+    if (draft) {
+      p.slug ||= `draft-${id}`; // slugs are set on first publish
+      p.publishedAt ||= p.updatedAt || new Date().toISOString();
+    }
     if (!validDate(p.updatedAt)) p.updatedAt = p.publishedAt;
-    const unknown = p.topics.filter((t) => !TOPICS.includes(t));
-    if (unknown.length) fail(`unknown topics ${unknown.join(', ')} (known: ${TOPICS.join(', ')})`);
-    if (slugs.has(p.slug)) fail(`slug "${p.slug}" is also used by post ${slugs.get(p.slug)}`);
+    const problem = postProblem(p) ?? (slugs.has(p.slug) ? `slug "${p.slug}" is also used by post ${slugs.get(p.slug)}` : null);
+    if (problem && draft) { console.warn(`Draft ${id} skipped: ${problem}`); continue; }
+    if (problem) throw new Error(`Post ${id}: ${problem}. Fix it in /admin or the Firebase console, then publish again.`);
     slugs.set(p.slug, id);
     posts.push(p);
   }
