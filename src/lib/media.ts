@@ -10,6 +10,9 @@ export const POST_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 export const HASH_RE = /^[0-9a-f]{16}$/;
 export const BASE_RE = /^posts\/[A-Za-z0-9_-]{1,64}\/[0-9a-f]{16}-[1-9]\d{0,4}x[1-9]\d{0,4}$/;
 
+/** Photos the Telegram sync uploaded: `notes/{post}/{telegramPhotoId}-{w}x{h}`. Shown in posts, never signed for upload. */
+const NOTE_BASE_RE = /^notes\/\d{1,12}\/\d{1,20}-[1-9]\d{0,4}x[1-9]\d{0,4}$/;
+
 export const mediaBase = (postId: string, hash: string, w: number, h: number) => `posts/${postId}/${hash}-${w}x${h}`;
 export const mediaFile = (base: string, width: Width) => `${base}-${width}.webp`;
 
@@ -17,6 +20,6 @@ export const mediaFile = (base: string, width: Width) => `${base}-${width}.webp`
 export function parseMediaUrl(src: string, mediaUrl: string): { base: string; w: number; h: number } | null {
   if (!src.startsWith(`${mediaUrl}/`)) return null;
   const m = /^(.+-([1-9]\d*)x([1-9]\d*))-(?:400|800|1600)\.webp$/.exec(src.slice(mediaUrl.length + 1));
-  if (!m || !BASE_RE.test(m[1])) return null;
+  if (!m || !(BASE_RE.test(m[1]) || NOTE_BASE_RE.test(m[1]))) return null;
   return { base: m[1], w: Number(m[2]), h: Number(m[3]) };
 }

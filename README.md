@@ -114,6 +114,12 @@ Needs [uv](https://docs.astral.sh/uv/); it installs Python 3.12 and the librarie
 | `npm run tg:sync -- --full` | Reads every post: new ones, edits, and posts deleted from the channel (hidden on the site) |
 | `npm run tg:sync` | Only posts newer than the last run |
 | `… --publish` | Rebuilds the site at the end, if anything changed |
+| `npm run tg:draft -- --long` | Makes a draft in the admin from every post over 100 words that has not been one yet (albums excluded). Add `--dry-run` to list them, `--show` to read them |
+| `npm run tg:draft -- 142` | A draft from one post. `136+137+138+139` joins several into one |
 | `npm run tg:test` | Tests |
 
-What gets imported: one note per post or album, with its text and photos (WebP at 400, 800 and 1600, no EXIF). A caption line `Place // Year` becomes the place and the year, and only such posts with photos show on the site, as albums under `/fota/` (posts about the same place and year are one album). Skipped: service messages, forwarded posts, posts that link to essentis.xyz, posts tagged `#толькітг`, posts with neither text nor photos. Videos, stickers, files over 20 MB and photos under a spoiler are left out. Runs are safe to repeat and to interrupt. A note you hide by hand in Firestore (`hidden: true`) stays hidden.
+What gets imported: one note per post or album, with its text and photos (WebP at 400, 800 and 1600, no EXIF). A caption line `Place // Year` becomes the place and the year, and only such posts with photos show on the site, as albums under `/fota/` (posts about the same place and year are one album). Skipped: service messages, forwarded posts, posts that link to essentis.xyz, posts tagged `#толькітг`, posts with neither text nor photos. Videos, stickers, files over 20 MB and photos under a spoiler are left out. Runs are safe to repeat and to interrupt. 
+
+Drafts keep links and formatting and reuse the photos the sync uploaded, so run `tg:sync` first. Custom Telegram emoji and hashtag lines are dropped; some hashtags become topics. A draft is never published by the script, never overwrites an existing post, and does not come back with `--long` after you delete it.
+
+A note you hide by hand in Firestore (`hidden: true`) stays hidden.

@@ -257,3 +257,7 @@ Differences from the plan above:
 ## Photo albums on the site (2026-11-24)
 
 Replaces "there are no note pages on the site". Posts with a "Place // Year" caption and photos are albums: `/fota/` (`/en/photos/`) lists them by year, `/fota/<place-year>/` shows one. Posts about the same place and year are one album. Album addresses come from the caption, so editing the place or year moves the album. Home shows the latest four and links here, not to Telegram. Other channel posts stay in Firestore, unshown for now.
+
+## Long reads from the channel (2026-11-24)
+
+`npm run tg:draft` turns channel posts over 100 words into draft posts (`posts/tg-<id>`), with Telegram's formatting converted to Markdown (`tools/tg_sync/tg_sync/markdown.py`). Publishing stays by hand in the admin: the posts have no titles or topics of their own. `sync/telegram.drafted` remembers what was made. Post bodies may show photos under `notes/` (srcset included); upload signing still covers only `posts/`.

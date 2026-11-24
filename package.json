@@ -18,6 +18,7 @@
     "tg:login": "npm run --silent tg -- login",
     "tg:check": "npm run --silent tg -- check",
     "tg:sync": "npm run --silent tg -- sync",
+    "tg:draft": "npm run --silent tg -- draft",
     "tg:test": "uv run --quiet --directory tools/tg_sync pytest -q",
     "tokens": "node scripts/tokens.mjs",
     "fonts": "node scripts/fonts.mjs"

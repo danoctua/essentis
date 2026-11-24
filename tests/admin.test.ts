@@ -48,6 +48,11 @@ describe('media', () => {
     expect(base).toMatch(BASE_RE);
     expect(parseMediaUrl(`${MEDIA_URL}/${base}-800.webp`, MEDIA_URL)).toEqual({ base, w: 2400, h: 1600 });
   });
+  it('parses photos from the Telegram sync, but never signs uploads for them', () => {
+    const base = 'notes/142/5881953129601896279-2560x2116';
+    expect(parseMediaUrl(`${MEDIA_URL}/${base}-1600.webp`, MEDIA_URL)).toEqual({ base, w: 2560, h: 2116 });
+    expect(base).not.toMatch(BASE_RE);
+  });
   it('ignores other images and malformed keys', () => {
     expect(parseMediaUrl('https://example.com/a-1x1-800.webp', MEDIA_URL)).toBeNull();
     expect(parseMediaUrl(`${MEDIA_URL}/../secret-1x1-800.webp`, MEDIA_URL)).toBeNull();

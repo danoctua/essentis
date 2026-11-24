@@ -21,6 +21,7 @@ class Msg:
     id: int
     date: datetime
     text: str = ""
+    entities: list = field(default_factory=list)
     urls: list[str] = field(default_factory=list)
     grouped_id: int | None = None
     edit_date: datetime | None = None
@@ -43,6 +44,9 @@ class Note:
     edit_date: datetime | None
     skip: str | None
     warnings: list[str]
+    """The caption as sent, for its formatting: entity offsets count from here."""
+    raw: str = ""
+    entities: list = field(default_factory=list)
 
     @property
     def title(self) -> str:
@@ -82,12 +86,14 @@ def group(msgs: list[Msg]) -> list[Note]:
     notes = []
     for ms in groups.values():
         # The caption can sit on any photo of the album.
-        text = next((m.text.strip() for m in ms if m.text.strip()), "")
+        said = next((m for m in ms if m.text.strip()), ms[0])
+        text = said.text.strip()
         place, year = parse_place(text)
         edits = [m.edit_date for m in ms if m.edit_date]
         notes.append(Note(
             id=str(ms[0].id), last_id=ms[-1].id, date=ms[0].date, text=text, place=place, year=year,
             photos=[p for m in ms for p in m.photos], grouped_id=ms[0].grouped_id,
             edit_date=max(edits) if edits else None, skip=skip_reason(ms), warnings=[w for m in ms for w in m.warnings],
+            raw=said.text, entities=said.entities,
         ))
     return sorted(notes, key=lambda n: int(n.id))

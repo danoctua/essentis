@@ -23,6 +23,7 @@ def to_msg(m) -> Msg:
         out.service = True
         return out
     out.text = m.message or ""
+    out.entities = list(m.entities or [])
     out.forwarded = m.fwd_from is not None
     out.urls = [e.url for e in m.entities or [] if isinstance(e, tl.MessageEntityTextUrl)]
     media = m.media

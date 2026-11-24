@@ -1,6 +1,7 @@
 """Firestore: notes/{id} and sync/telegram."""
 from datetime import datetime, timezone
 
+from google.api_core.exceptions import Conflict
 from google.cloud import firestore
 
 from .config import EMULATOR_PROJECT, Config
@@ -30,6 +31,20 @@ class Store:
 
     def hide(self, note_id: str) -> None:
         self.db.document(f"notes/{note_id}").update({"hidden": True, "hiddenBy": "sync"})
+
+    def drafted(self) -> set[int]:
+        """Posts already made into drafts. Kept apart from the drafts, so one the owner deleted does not come back."""
+        d = self.db.document("sync/telegram").get()
+        return set((d.to_dict() or {}).get("drafted") or [])
+
+    def add_draft(self, draft_id: str, doc: dict, notes: list[int]) -> bool:
+        """Never touches a post that exists: it may have been edited or published."""
+        try:
+            self.db.document(f"posts/{draft_id}").create(doc)
+        except Conflict:
+            return False
+        self.db.document("sync/telegram").set({"drafted": firestore.ArrayUnion(notes)}, merge=True)
+        return True
 
     def published(self) -> None:
         """The admin shows this as the last rebuild."""

@@ -1,4 +1,4 @@
-"""login | check | sync (the default)."""
+"""login | check | draft | sync (the default)."""
 import argparse
 import asyncio
 import logging
@@ -6,10 +6,13 @@ import sqlite3
 import sys
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone
 
 from botocore.exceptions import BotoCoreError, ClientError
 
 from .config import R2, Config, ConfigError
+from .drafts import LONG, Unknown, choose, make
+from .notes import group
 from .storage import Storage
 from .store import Store
 from .sync import Result, run
@@ -64,6 +67,29 @@ async def sync(cfg: Config, a: argparse.Namespace) -> int:
     return 1 if r.failed else 0
 
 
+async def draft(cfg: Config, a: argparse.Namespace) -> int:
+    store = Store(cfg)
+    async with telegram.channel(cfg) as ch:
+        notes = group(await ch.fetch(0))
+    asked, long = choose(notes, a.posts, store.drafted())
+    picked = asked + (long if a.long else [])
+    if not picked:
+        print(f"Nothing to do: every post over {LONG} words is a draft already." if a.long else "Say which posts, or --long for every long one.")
+        return 0
+    photos = {i: n.get("photos") or [] for i, n in store.notes().items()}
+    made = 0
+    for d in (make(ns, photos, cfg.get("PUBLIC_MEDIA_URL")) for ns in picked):
+        ok = a.dry_run or store.add_draft(d.id, d.document(datetime.now(timezone.utc)), d.notes)
+        made += ok
+        print(f"  {'+' if ok else '='} {'+'.join(map(str, d.notes)):<16} {d.date:%Y-%m-%d}  {d.lang}  {d.words:>4} words  {d.title}{'' if ok else '  (a post with this id exists, left as it is)'}")
+        for u in d.referrals:
+            print(f"      check this link before publishing: {u}")
+        if a.dry_run and a.show:
+            print("\n" + d.body)
+    print(f"\n{'Would make' if a.dry_run else 'Made'} {made} draft{'' if made == 1 else 's'}. Nothing is published: open https://essentis.xyz/admin/ to review.")
+    return 0
+
+
 async def check(cfg: Config) -> int:
     bad = 0
 
@@ -98,13 +124,16 @@ async def check(cfg: Config) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="tg_sync", description="Copies posts from the essentis channel to the site.")
-    p.add_argument("command", nargs="?", choices=["sync", "login", "check"], default="sync")
+    p.add_argument("command", nargs="?", choices=["sync", "login", "check", "draft"], default="sync")
+    p.add_argument("posts", nargs="*", help="draft: post numbers; 136+137 makes one draft of two posts")
+    p.add_argument("--long", action="store_true", help=f"draft: every post over {LONG} words that is not a draft yet")
+    p.add_argument("--show", action="store_true", help="draft --dry-run: print the texts too")
     p.add_argument("--full", action="store_true", help="re-read every post: edits, and posts deleted from the channel")
     p.add_argument("--dry-run", action="store_true", help="show what would happen; write nothing")
     p.add_argument("--phone", action="store_true", help="login: with a code from Telegram instead of a QR code")
     p.add_argument("--debug", action="store_true", help="log the conversation with Telegram (request names, no contents)")
     p.add_argument("--publish", action="store_true", help="rebuild the site at the end, if anything changed")
-    a = p.parse_args(argv)
+    a = p.parse_intermixed_args(argv)  # "draft --long 136+137": options before the numbers
     if a.debug:
         logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s", datefmt="%H:%M:%S")
         logging.getLogger("tg_sync").setLevel(logging.DEBUG)
@@ -114,8 +143,11 @@ def main(argv: list[str] | None = None) -> int:
         if a.command == "login":
             print(f"Signed in as {asyncio.run(telegram.login(cfg, a.phone))}. Session: {cfg.session}")
             return 0
-        return asyncio.run(check(cfg) if a.command == "check" else sync(cfg, a))
-    except ConfigError as e:
+        if a.command != "draft" and a.posts:
+            p.error("post numbers go with draft")
+        run_ = {"check": lambda: check(cfg), "draft": lambda: draft(cfg, a), "sync": lambda: sync(cfg, a)}[a.command]
+        return asyncio.run(run_())
+    except (ConfigError, Unknown) as e:
         print(e, file=sys.stderr)
         return 2
     except sqlite3.OperationalError:
