@@ -62,7 +62,7 @@ Regenerate generated files after changing their source:
 | `src/admin/` | The admin app (Preact), mounted on `/admin/` |
 | `src/pages/api/` | The admin's two server routes: image upload URLs and "update site" |
 | `firestore.rules` | Only an account with the `admin` claim may read or write |
-| `tools/` | Telegram sync (Python, phase 4) |
+| `tools/tg_sync/` | Telegram sync (Python, run locally) |
 | `sessions/` | Telethon login session. Git-ignored; never commit or upload it |
 
 ## Setup: what to configure, what to provide, and where
@@ -99,8 +99,21 @@ Do these once. Values go into Vercel (Project → Settings → Environment Varia
 3. Settings → Git → Deploy Hooks → create one named `publish` on branch `main`. Its URL is `VERCEL_DEPLOY_HOOK_URL` (secret: anyone with it can trigger builds).
 4. Settings → Domains → add `essentis.xyz` (and `www.essentis.xyz` redirecting to it). Put the records it shows into Cloudflare DNS, proxy off.
 
-### 4. Telegram (local sync script, phase 4)
+### 4. Telegram (local sync)
 
-1. my.telegram.org → API development tools → create an app. Put `TG_API_ID` and `TG_API_HASH` in `tools/tg_sync/.env`, with `TG_CHANNEL=essentis` and `TG_SESSION=sessions/essentis.session`.
-2. Run `python -m tg_sync login` once. It asks for your phone number, the code and your 2FA password, and creates the session in the git-ignored `sessions/` folder.
-3. If the session expires or you end it in Telegram → Settings → Devices, delete the file and log in again.
+Needs [uv](https://docs.astral.sh/uv/); it installs Python 3.12 and the libraries by itself.
+
+1. my.telegram.org → API development tools → create an app. `cp tools/tg_sync/.env.example tools/tg_sync/.env` and fill in `TG_API_ID` and `TG_API_HASH`.
+2. In the repo's `.env`, next to `FIREBASE_SERVICE_ACCOUNT`, set `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` (the same values as in Vercel; Cloudflare shows the secret once, so if it is lost, create a second token for this bucket). `VERCEL_DEPLOY_HOOK_URL` is needed only for `--publish`.
+3. `npm run tg:login` once, in your own terminal. It asks for your phone number, the code and your two-step password, and saves the session to the git-ignored `sessions/` folder. The session is a login to your whole account: never copy or upload it. To end it: Telegram → Settings → Devices, delete the file, log in again.
+4. `npm run tg:check` tests Telegram, Firestore and R2.
+
+| Command | What it does |
+| --- | --- |
+| `npm run tg:sync -- --full --dry-run` | Lists what a full import would do. Writes nothing; R2 is not needed |
+| `npm run tg:sync -- --full` | Reads every post: new ones, edits, and posts deleted from the channel (hidden on the site) |
+| `npm run tg:sync` | Only posts newer than the last run |
+| `… --publish` | Rebuilds the site at the end, if anything changed |
+| `npm run tg:test` | Tests |
+
+What gets imported: one note per post or album, with its text and photos (WebP at 400, 800 and 1600, no EXIF). A caption line `Place // Year` becomes the place and the year, and only such albums show on Home. Skipped: service messages, forwarded posts, posts that link to essentis.xyz, posts tagged `#толькітг`, posts with neither text nor photos. Videos, stickers, files over 20 MB and photos under a spoiler are left out. Runs are safe to repeat and to interrupt. A note you hide by hand in Firestore (`hidden: true`) stays hidden.

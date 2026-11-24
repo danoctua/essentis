@@ -6,7 +6,7 @@ import WovenBand from '../components/WovenBand.astro';
 import PostRow from '../components/PostRow.astro';
 import AlbumRow from '../components/AlbumRow.astro';
 import { getContent } from '../lib/content';
-import { postView } from '../lib/view';
+import { albums, postView } from '../lib/view';
 import { routes } from '../lib/routes';
 import { site } from '../lib/site';
 import { ui, type Lang } from '../data/ui';
@@ -17,7 +17,7 @@ const { lang } = Astro.props;
 const t = ui[lang];
 const c = await getContent();
 const latest = c.posts.slice(0, 4).map((p) => postView(p, lang));
-const albums = c.notes.filter((n) => n.photos.length > 0).slice(0, 2);
+const latestAlbums = albums(c.notes).slice(0, 2);
 const about = c.about[lang] ?? c.about.be;
 const bio = about ? await renderMarkdown(about.bio, { lang, now: true }) : '';
 const other: Lang = lang === 'be' ? 'en' : 'be';
@@ -47,12 +47,12 @@ const other: Lang = lang === 'be' ? 'en' : 'be';
         ? <ul class="rows">{latest.map((p) => <li><PostRow post={p} pageLang={lang} /></li>)}</ul>
         : <p class="muted">{t.noPostsYet}</p>}
     </section>
-    {albums.length > 0 && (
+    {latestAlbums.length > 0 && (
       <section aria-labelledby="chan-h">
         <div class="sechead"><h2 id="chan-h" class="h2">{t.fromChannel}</h2><a href={site.channelUrl}>{t.openChannel}</a></div>
         <p class="chan-note">{t.channelNote}</p>
         <ul class="rows">
-          {albums.map((n) => <li><AlbumRow note={n} {lang} /></li>)}
+          {latestAlbums.map((n) => <li><AlbumRow note={n} {lang} /></li>)}
         </ul>
       </section>
     )}

@@ -1,0 +1,16 @@
+[project]
+name = "tg-sync"
+version = "0.1.0"
+description = "Copies posts from the essentis Telegram channel to Firestore and R2"
+requires-python = ">=3.12,<3.14"
+dependencies = ["telethon>=1.40,<2", "pillow>=11", "boto3>=1.36", "google-cloud-firestore>=2.20", "python-dotenv>=1.0"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

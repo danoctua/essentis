@@ -241,3 +241,15 @@ Changes from the plan above, made while building:
 - **No Now page.** The Now note shows only on Home (and is edited in the admin). `/ciapier/` and `/en/now/` redirect to Home; "Цяпер" left the navigation.
 - **Header on phones:** brand and the language switch share the first row, the switch pinned right; the sections sit on their own row below. One row from 720 px.
 - **Vercel fix:** `jwks-rsa` 4 `require()`s the ESM-only jose 6, which Vercel's function loader refuses (`ERR_REQUIRE_ESM`); `package.json` overrides it to jose 5. Test locally with `node --no-experimental-require-module`.
+
+## Phase 4: Telegram sync (2026-11-24)
+
+Differences from the plan above:
+
+- A uv project in `tools/tg_sync/` (`pyproject.toml`, `uv.lock`, Python 3.12) instead of `requirements.txt`; run through `npm run tg:login | tg:check | tg:sync`.
+- Photo keys are `notes/{noteId}/{telegramPhotoId}-{w}x{h}`, not `notes/{msgId}/{n}`: a replaced photo gets a new name, so caches never serve the old one and reruns skip what is uploaded.
+- Firestore credentials and R2 keys come from the repo's `.env`; `tools/tg_sync/.env` holds only `TG_*`.
+- Forwarded posts are skipped. Photos under a spoiler are left out.
+- `hiddenBy: "sync"` marks notes the sync hid, so a note hidden by hand is never brought back.
+- An incremental run reads 50 messages further back, so an album that was still being posted during the last run stays one note.
+- Home shows only albums with a "Place // Year" caption.

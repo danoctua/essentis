@@ -14,6 +14,11 @@
     "admin:grant": "node --env-file-if-exists=.env scripts/grant-admin.mjs",
     "emulators": "npx -y firebase-tools@15.37.0 emulators:start --only auth,firestore --project demo-essentis",
     "dev:emulators": "FIREBASE_SERVICE_ACCOUNT= FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 PUBLIC_FIREBASE_EMULATORS=1 astro dev",
+    "tg": "uv run --quiet --directory tools/tg_sync --no-dev python -m tg_sync",
+    "tg:login": "npm run --silent tg -- login",
+    "tg:check": "npm run --silent tg -- check",
+    "tg:sync": "npm run --silent tg -- sync",
+    "tg:test": "uv run --quiet --directory tools/tg_sync pytest -q",
     "tokens": "node scripts/tokens.mjs",
     "fonts": "node scripts/fonts.mjs"
   },

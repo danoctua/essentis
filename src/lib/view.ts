@@ -59,6 +59,9 @@ export function postView(p: Post, pageLang: Lang): PostView {
   };
 }
 
+/** The photo albums for Home: posts with a "Place // Year" caption. Memes and other pictures stay in the channel. */
+export const albums = (notes: Note[]): Note[] => notes.filter((n) => !!n.place && n.photos.length > 0);
+
 /** "Karkonosze // 2026" from the caption, or its first line. */
 export function noteTitle(n: Note): string {
   if (n.place) return n.year ? `${n.place} // ${n.year}` : n.place;
