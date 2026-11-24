@@ -235,3 +235,9 @@ Changes from the plan above, made while building:
 - **Now, About, Uses, Work, Projects:** forms with Markdown fields; the Now editor counts words and warns above 150.
 - **Also:** code blocks and headings clear the drop cap.
 - **Tested** against the Auth and Firestore emulators: rules tests (owner, other account, visitor); a browser run at 1400 and 390 px covering sign-in, the no-access screen, granting, writing, preview, image paste (R2 intercepted: three WebP files, no EXIF, hash-named), publishing and the once-a-minute limit, Now and Work saves.
+
+## Changes after phase 3 (2026-11-24)
+
+- **No Now page.** The Now note shows only on Home (and is edited in the admin). `/ciapier/` and `/en/now/` redirect to Home; "Цяпер" left the navigation.
+- **Header on phones:** brand and the language switch share the first row, the switch pinned right; the sections sit on their own row below. One row from 720 px.
+- **Vercel fix:** `jwks-rsa` 4 `require()`s the ESM-only jose 6, which Vercel's function loader refuses (`ERR_REQUIRE_ESM`); `package.json` overrides it to jose 5. Test locally with `node --no-experimental-require-module`.

@@ -1,38 +1,62 @@
 [
   {
     "id": "cluepoints",
-    "from": 0,
+    "from": 2025,
     "to": null,
     "role": "Lead Engineer",
     "company": "CluePoints",
-    "order": 0,
     "line": {
-      "be": "Софт для клінічных дасьледаваньняў. Каманда сэньёр-інжынэраў, праца з агентамі ШІ.",
-      "en": "Software for clinical trials. A squad of senior engineers, working with AI agents."
-    }
+      "be": "Софт для клінічных дасьледаваньняў. Кірую камандай, якая робіць кіраваньне рэсурсамі, аўтэнтыфікацыю і аўтарызацыю, і ўводжу ў яе працу агентаў ШІ.",
+      "en": "Software for clinical trials. I lead the squad behind resource management, authentication and authorization, and bring AI agents into how it works."
+    },
+    "order": 0
   },
   {
-    "id": "w2",
-    "from": 0,
-    "to": 0,
-    "role": "[Роля]",
-    "company": "[кампанія]",
-    "order": 1,
+    "id": "stxnext-lead",
+    "from": 2023,
+    "to": 2025,
+    "role": "Technical Lead",
+    "company": "STX Next",
     "line": {
-      "be": "[Адзін радок пра тое, што зьмянілася.]",
-      "en": "[One line on what changed.]"
-    }
+      "be": "Спачатку кіраваў камандай Python і React, потым камандай асноўнага сэрвісу плятформы для некалькіх праграм: рэсурсы, аўтэнтыфікацыя і аўтарызацыя.",
+      "en": "First led a Python and React team, then the squad behind a core platform service used by several applications: resources, authentication and authorization."
+    },
+    "order": 1
   },
   {
-    "id": "w3",
+    "id": "stxnext-dev",
+    "from": 2021,
+    "to": 2022,
+    "role": "Python Developer",
+    "company": "STX Next",
+    "line": {
+      "be": "Вэб-праграмы для кіраваньня кампаніяй і фінансамі: Django, React з MobX, MSSQL на Azure. Скрэйпэры на Scrapy. Дапамагаў новым калегам увайсьці ў працу.",
+      "en": "Web apps for company and financial management: Django, React with MobX, MSSQL on Azure. Scrapers with Scrapy. Helped new colleagues find their feet."
+    },
+    "order": 2
+  },
+  {
+    "id": "dtlgroup",
+    "from": 2020,
+    "to": 2020,
+    "role": "Owner",
+    "company": "DTLgroup",
+    "line": {
+      "be": "IT-паслугі для малога бізнэсу і прыватных асоб, у тым ліку маніторынг на Elasticsearch і Kibana.",
+      "en": "IT services for small businesses and individuals, including monitoring with Elasticsearch and Kibana."
+    },
+    "order": 3
+  },
+  {
+    "id": "freelance",
     "from": 2019,
-    "to": 0,
-    "role": "[Роля]",
-    "company": "[кампанія]",
-    "order": 2,
+    "to": 2020,
+    "role": "Software Engineer",
+    "company": "Freelance",
     "line": {
-      "be": "[Адзін радок пра тое, што зьмянілася.]",
-      "en": "[One line on what changed.]"
-    }
+      "be": "Сыстэма аўтаматызацыі і краўлінгу, якая зьбірала даныя з розных сайтаў і крыніц.",
+      "en": "A crawling and automation system that collected data from many websites and sources."
+    },
+    "order": 4
   }
 ]

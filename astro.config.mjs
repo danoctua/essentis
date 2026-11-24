@@ -10,5 +10,7 @@ export default defineConfig({
   adapter: vercel(),
   integrations: [preact(), sitemap({ filter: (page) => !page.includes('/admin') })],
   trailingSlash: 'always',
+  // The Now page was removed; the Now note lives on Home.
+  redirects: { '/ciapier/': '/', '/en/now/': '/en/' },
   build: { format: 'directory' },
 });

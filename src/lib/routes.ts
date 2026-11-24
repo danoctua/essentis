@@ -8,7 +8,6 @@ export const routes = {
   home: { be: '/', en: '/en/' },
   writing: { be: '/dopisy/', en: '/en/writing/' },
   about: { be: '/pra-mianie/', en: '/en/about/' },
-  now: { be: '/ciapier/', en: '/en/now/' },
 } as const;
 export type RouteName = keyof typeof routes;
 export type Alternates = Record<Lang, string>;

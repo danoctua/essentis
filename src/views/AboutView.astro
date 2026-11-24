@@ -18,7 +18,8 @@ const uses = pick(c.uses);
 const md = (s?: string) => (s ? renderMarkdown(s, { lang }) : Promise.resolve(''));
 const [intro, meaning, summary, usesHtml] = await Promise.all([md(about?.intro), md(about?.meaning), md(about?.workSummary), md(uses?.body)]);
 const yr = (n?: number | null) => (n && n > 0 ? String(n) : '…');
-const span = (from: number, to?: number | null) => `${yr(from)}–${to === null || to === undefined ? t.now.toLowerCase() : yr(to)}`;
+const span = (from: number, to?: number | null) =>
+  to === null || to === undefined ? `${yr(from)}–${t.now.toLowerCase()}` : to === from ? yr(from) : `${yr(from)}–${yr(to)}`;
 ---
 <Base {lang} title={t.about} alternates={routes.about} current="about">
   <div class="grid">

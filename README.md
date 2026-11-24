@@ -48,7 +48,7 @@ Regenerate generated files after changing their source:
 | Path | What |
 | --- | --- |
 | `src/views/` | One view per page type, shared by both languages |
-| `src/pages/` | Thin route files: `/`, `/dopisy/`, `/pra-mianie/`, `/ciapier/` and their `/en/` twins |
+| `src/pages/` | Thin route files: `/`, `/dopisy/`, `/pra-mianie/` and their `/en/` twins |
 | `src/lib/routes.ts` | Every URL in both languages. Use it; never swap a prefix |
 | `src/lib/content.ts` | Content types and the source switch (fixtures or Firestore) |
 | `src/lib/view.ts` | What a page in one language shows: translation or original with a gloss |

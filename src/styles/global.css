@@ -30,9 +30,17 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 }
 
 /* Header */
-.top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 24px; padding-block: 20px; }
+/* Phones: brand and language switch share the first row (switch pinned right), sections below.
+   Wider: one row, brand left, sections and switch right. */
+.top { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "brand langs" "nav nav"; align-items: center; gap: 4px 24px; padding-block: 16px; }
+.top .brand { grid-area: brand; justify-self: start; }
+.top nav { grid-area: nav; }
+.top .langs { grid-area: langs; }
+@media (min-width: 720px) {
+  .top { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "brand nav langs"; padding-block: 20px; }
+  .top nav { justify-self: end; }
+}
 .brand { display: inline-flex; align-items: center; gap: 10px; min-height: var(--tap-min); text-decoration: none; font-size: 18px; font-weight: 500; }
-.navs { display: flex; align-items: center; flex-wrap: wrap; gap: 0 24px; }
 .nav, .langs { display: flex; gap: 0 20px; list-style: none; margin: 0; padding: 0; font-size: 15px; }
 .langs { gap: 0 4px; }
 .nav a, .langs a { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap-min); text-decoration: none; color: var(--muted); }

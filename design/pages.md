@@ -10,7 +10,6 @@ How the brand maps onto the site. Belarusian is the default language at `/`, Eng
 | Writing `/dopisy/` | Допісы / Writing | Every long read, newest first, grouped by year, with a topic filter |
 | Post `/dopisy/<slug>/` | | One long read |
 | About `/pra-mianie/` | Пра мяне / About | Who I am, the mark's meaning, work (summary, by years, example projects), Uses |
-| Now `/ciapier/` | Цяпер / Now | The Now note in full plus its update date, for the nownownow.com convention |
 
 Navigation shows Допісы, Цяпер, Пра мяне (Writing, Now, About) and the language switch. The mark and wordmark link Home. Slugs are ASCII-folded Łacinka.
 
@@ -20,7 +19,7 @@ A single Markdown document edited in the admin, with an "updated" date set on sa
 
 - Allowed: paragraphs, bullet lists, links, bold and italic. No images, headings, tables or embeds; the renderer drops them.
 - Length: aim for 60 to 120 words. The admin warns above 150.
-- Where it shows: in full on Home, in a `paper-raised` block beside the intro on desktop and right after it on mobile, headed "Цяпер" with "Абноўлена 19 лістапада" underneath. The same text has its own page at `/ciapier/`.
+- Where it shows: in full on Home, in a `paper-raised` block beside the intro on desktop and right after it on mobile, headed "Цяпер" with "Абноўлена 19 лістапада" underneath. There is no separate Now page (removed 2026-11-24); `/ciapier/` and `/en/now/` redirect to Home.
 - One version per language; if the English one is missing, the English site shows the Belarusian text with `lang="be"` and a note that it has not been translated.
 
 ## The short bio

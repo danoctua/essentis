@@ -22,3 +22,6 @@ test-results/
 # Firebase service account keys (secret). Store them base64 in .env / Vercel, never as files here.
 *-firebase-adminsdk-*.json
 serviceAccount*.json
+
+# Personal documents (CVs, profiles) never go into the repo.
+*.pdf
