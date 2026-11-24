@@ -253,3 +253,7 @@ Differences from the plan above:
 - `hiddenBy: "sync"` marks notes the sync hid, so a note hidden by hand is never brought back.
 - An incremental run reads 50 messages further back, so an album that was still being posted during the last run stays one note.
 - Home shows only albums with a "Place // Year" caption.
+
+## Photo albums on the site (2026-11-24)
+
+Replaces "there are no note pages on the site". Posts with a "Place // Year" caption and photos are albums: `/fota/` (`/en/photos/`) lists them by year, `/fota/<place-year>/` shows one. Posts about the same place and year are one album. Album addresses come from the caption, so editing the place or year moves the album. Home shows the latest four and links here, not to Telegram. Other channel posts stay in Firestore, unshown for now.

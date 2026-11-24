@@ -5,7 +5,7 @@ import { ui, type Lang } from '../data/ui';
 interface Props { lang: Lang; alternates: Alternates; current?: RouteName }
 const { lang, alternates, current } = Astro.props;
 const t = ui[lang];
-const nav: [RouteName, string][] = [['writing', t.writing], ['about', t.about]];
+const nav: [RouteName, string][] = [['writing', t.writing], ['photos', t.photosTitle], ['about', t.about]];
 ---
 <div class="wrap">
   <header class="top">

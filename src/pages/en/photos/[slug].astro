@@ -1,0 +1,7 @@
+---
+import AlbumView from '../../../views/AlbumView.astro';
+import { albumPaths } from '../../../lib/albumPaths';
+export const getStaticPaths = () => albumPaths('en');
+const { lang, album } = Astro.props;
+---
+<AlbumView {lang} {album} />

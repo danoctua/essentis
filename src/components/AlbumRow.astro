@@ -1,20 +1,18 @@
 ---
-/** A Telegram album on Home: thumbnail, "Place // Year", photo count. Links out to the channel. */
-import type { Note } from '../lib/content';
+/** A photo album on Home: thumbnail, "Place // Year", photo count. Opens the album. */
+import type { Album } from '../lib/albums';
+import { albumUrl } from '../lib/routes';
 import { mediaUrl } from '../lib/site';
-import { noteTitle } from '../lib/view';
-import { NB, ui, type Lang } from '../data/ui';
-interface Props { note: Note; lang: Lang }
-const { note, lang } = Astro.props;
-const first = note.photos[0];
-const thumb = first ? mediaUrl(first.key, 400) : null;
-const t = ui[lang];
+import { ui, type Lang } from '../data/ui';
+interface Props { album: Album; lang: Lang }
+const { album, lang } = Astro.props;
+const thumb = mediaUrl(album.cover.key, 400);
 ---
-<a class="note" href={note.tgUrl}>
+<a class="note" href={albumUrl(album.slug, lang)}>
   {thumb ? <img class="thumb" src={thumb} alt="" width="72" height="72" loading="lazy" /> : <span class="thumb ph" aria-hidden="true" />}
   <span class="body">
-    <span class="ttl">{noteTitle(note)}</span>
-    <span class="meta">{note.photos.length}{NB}{t.photos}, Telegram</span>
+    <span class="ttl">{album.title}</span>
+    <span class="meta">{ui[lang].photos(album.count)}</span>
   </span>
 </a>
 <style>

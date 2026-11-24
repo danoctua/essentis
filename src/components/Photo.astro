@@ -1,0 +1,16 @@
+---
+/** One photo from R2 at the three stored widths. Sample content has no files: a striped box instead. */
+import type { Media } from '../lib/content';
+import { mediaUrl } from '../lib/site';
+interface Props { photo: Media; alt: string; sizes: string; eager?: boolean; class?: string }
+const { photo, alt, sizes, eager = false, class: cls } = Astro.props;
+const src = mediaUrl(photo.key, 800);
+// Small originals are stored at their own width, so the srcset must not promise more.
+const set = ([400, 800, 1600] as const).map((w) => `${mediaUrl(photo.key, w)} ${Math.min(w, photo.w)}w`).filter((s, i, all) => all.findIndex((x) => x.split(' ')[1] === s.split(' ')[1]) === i).join(', ');
+---
+{src
+  ? <img class={cls} {src} srcset={set} {sizes} width={photo.w} height={photo.h} {alt} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+  : <span class:list={[cls, 'ph']} role="img" aria-label={alt} style={`aspect-ratio:${photo.w}/${photo.h}`} />}
+<style>
+  .ph { display: block; width: 100%; background: repeating-linear-gradient(135deg, var(--paper-raised) 0 8px, var(--line) 8px 16px); }
+</style>

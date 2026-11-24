@@ -6,12 +6,14 @@ How the brand maps onto the site. Belarusian is the default language at `/`, Eng
 
 | Page | BE / EN | What it holds |
 | --- | --- | --- |
-| Home `/` | Галоўная / Home | Name, a short personal bio, the Now block, the latest four posts, latest channel notes, links |
+| Home `/` | Галоўная / Home | Name, a short personal bio, the Now block, the latest four posts, the latest four photo albums, links |
 | Writing `/dopisy/` | Допісы / Writing | Every long read, newest first, grouped by year, with a topic filter |
 | Post `/dopisy/<slug>/` | | One long read |
+| Photos `/fota/` | Фота / Photos | Channel albums with a "Place // Year" caption, by year: square covers, place, photo count |
+| Album `/fota/<place-year>/` | | Every post about one place and year: captions, uncropped photos in even rows, a full-screen viewer, a link to each post on Telegram |
 | About `/pra-mianie/` | Пра мяне / About | Who I am, the mark's meaning, work (summary, by years, example projects), Uses |
 
-Navigation shows Допісы, Цяпер, Пра мяне (Writing, Now, About) and the language switch. The mark and wordmark link Home. Slugs are ASCII-folded Łacinka.
+Navigation shows Допісы, Фота, Пра мяне (Writing, Photos, About) and the language switch. The mark and wordmark link Home. Slugs are ASCII-folded Łacinka.
 
 ## The Now note
 

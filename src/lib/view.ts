@@ -1,6 +1,6 @@
 /** Turns stored content into what a page in one language shows. Pure; covered by tests. */
 import { fmtDay, NB, ui, type Lang } from '../data/ui';
-import type { Note, Post } from './content';
+import type { Post } from './content';
 import { postUrl } from './routes';
 
 export interface PostView {
@@ -57,13 +57,4 @@ export function postView(p: Post, pageLang: Lang): PostView {
     cover: p.cover,
     meta: `${fmtDay(date, pageLang)}, ${foreign ? `${t.langName[lang]}, ` : ''}${minutes}${NB}${t.min}`,
   };
-}
-
-/** The photo albums for Home: posts with a "Place // Year" caption. Memes and other pictures stay in the channel. */
-export const albums = (notes: Note[]): Note[] => notes.filter((n) => !!n.place && n.photos.length > 0);
-
-/** "Karkonosze // 2026" from the caption, or its first line. */
-export function noteTitle(n: Note): string {
-  if (n.place) return n.year ? `${n.place} // ${n.year}` : n.place;
-  return n.text.split('\n')[0].slice(0, 80);
 }

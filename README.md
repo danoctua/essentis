@@ -48,7 +48,7 @@ Regenerate generated files after changing their source:
 | Path | What |
 | --- | --- |
 | `src/views/` | One view per page type, shared by both languages |
-| `src/pages/` | Thin route files: `/`, `/dopisy/`, `/pra-mianie/` and their `/en/` twins |
+| `src/pages/` | Thin route files: `/`, `/dopisy/`, `/fota/`, `/pra-mianie/` and their `/en/` twins |
 | `src/lib/routes.ts` | Every URL in both languages. Use it; never swap a prefix |
 | `src/lib/content.ts` | Content types and the source switch (fixtures or Firestore) |
 | `src/lib/view.ts` | What a page in one language shows: translation or original with a gloss |
@@ -116,4 +116,4 @@ Needs [uv](https://docs.astral.sh/uv/); it installs Python 3.12 and the librarie
 | `… --publish` | Rebuilds the site at the end, if anything changed |
 | `npm run tg:test` | Tests |
 
-What gets imported: one note per post or album, with its text and photos (WebP at 400, 800 and 1600, no EXIF). A caption line `Place // Year` becomes the place and the year, and only such albums show on Home. Skipped: service messages, forwarded posts, posts that link to essentis.xyz, posts tagged `#толькітг`, posts with neither text nor photos. Videos, stickers, files over 20 MB and photos under a spoiler are left out. Runs are safe to repeat and to interrupt. A note you hide by hand in Firestore (`hidden: true`) stays hidden.
+What gets imported: one note per post or album, with its text and photos (WebP at 400, 800 and 1600, no EXIF). A caption line `Place // Year` becomes the place and the year, and only such posts with photos show on the site, as albums under `/fota/` (posts about the same place and year are one album). Skipped: service messages, forwarded posts, posts that link to essentis.xyz, posts tagged `#толькітг`, posts with neither text nor photos. Videos, stickers, files over 20 MB and photos under a spoiler are left out. Runs are safe to repeat and to interrupt. A note you hide by hand in Firestore (`hidden: true`) stays hidden.

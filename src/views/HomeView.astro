@@ -6,7 +6,8 @@ import WovenBand from '../components/WovenBand.astro';
 import PostRow from '../components/PostRow.astro';
 import AlbumRow from '../components/AlbumRow.astro';
 import { getContent } from '../lib/content';
-import { albums, postView } from '../lib/view';
+import { albums } from '../lib/albums';
+import { postView } from '../lib/view';
 import { routes } from '../lib/routes';
 import { site } from '../lib/site';
 import { ui, type Lang } from '../data/ui';
@@ -17,7 +18,7 @@ const { lang } = Astro.props;
 const t = ui[lang];
 const c = await getContent();
 const latest = c.posts.slice(0, 4).map((p) => postView(p, lang));
-const latestAlbums = albums(c.notes).slice(0, 2);
+const latestAlbums = albums(c.notes).slice(0, 4);
 const about = c.about[lang] ?? c.about.be;
 const bio = about ? await renderMarkdown(about.bio, { lang, now: true }) : '';
 const other: Lang = lang === 'be' ? 'en' : 'be';
@@ -48,11 +49,10 @@ const other: Lang = lang === 'be' ? 'en' : 'be';
         : <p class="muted">{t.noPostsYet}</p>}
     </section>
     {latestAlbums.length > 0 && (
-      <section aria-labelledby="chan-h">
-        <div class="sechead"><h2 id="chan-h" class="h2">{t.fromChannel}</h2><a href={site.channelUrl}>{t.openChannel}</a></div>
-        <p class="chan-note">{t.channelNote}</p>
+      <section aria-labelledby="photos-h">
+        <div class="sechead"><h2 id="photos-h" class="h2">{t.photosTitle}</h2><a href={routes.photos[lang]}>{t.allAlbums}</a></div>
         <ul class="rows">
-          {latestAlbums.map((n) => <li><AlbumRow note={n} {lang} /></li>)}
+          {latestAlbums.map((a) => <li><AlbumRow album={a} {lang} /></li>)}
         </ul>
       </section>
     )}
@@ -67,7 +67,6 @@ const other: Lang = lang === 'be' ? 'en' : 'be';
   .bio :global(p) { margin: 0; }
   .more { margin: 16px 0 0; font-size: 15px; }
   .lower { display: grid; gap: 48px; margin-top: 56px; }
-  .chan-note { margin: 0 0 8px; font-size: 15px; color: var(--muted); }
   @media (min-width: 900px) {
     .hero { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 64px; padding-top: 80px; align-items: start; }
     .lower { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 64px; }

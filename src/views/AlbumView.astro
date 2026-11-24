@@ -1,0 +1,119 @@
+---
+import Base from '../layouts/Base.astro';
+import Photo from '../components/Photo.astro';
+import type { Album } from '../lib/albums';
+import { albumAlternates, routes } from '../lib/routes';
+import { mediaUrl } from '../lib/site';
+import { ui, type Lang } from '../data/ui';
+
+interface Props { lang: Lang; album: Album }
+const { lang, album: a } = Astro.props;
+const t = ui[lang];
+let n = 0;
+const parts = a.parts.map((p) => ({ ...p, photos: p.photos.map((photo) => ({ photo, i: ++n, full: mediaUrl(photo.key, 1600) })) }));
+const alt = (i: number) => `${a.title}, ${t.photoOf(i, a.count)}`;
+---
+<Base {lang} title={a.title} description={`${a.title}. ${t.photos(a.count)}.`} alternates={albumAlternates(a.slug)} current="photos">
+  <p class="back"><a href={routes.photos[lang]}>{t.allAlbums}</a></p>
+  <h1 class="page-title">{a.title}</h1>
+  <p class="count muted">{t.photos(a.count)}</p>
+  <div data-album>
+    {parts.map((p, pi) => (
+      <section class="part" id={`p${p.id}`} aria-label={parts.length > 1 ? `${pi + 1} / ${parts.length}` : undefined}>
+        {p.caption.length > 0 && (
+          <div class="caption" lang={p.lang === lang ? undefined : p.lang}>
+            {p.caption.map((lines) => <p>{lines.map((l, i) => <>{i > 0 && <br />}{l}</>)}</p>)}
+          </div>
+        )}
+        <div class="photos">
+          {p.photos.map(({ photo, i, full }) => {
+            const ratio = (photo.w / photo.h).toFixed(3);
+            const img = <Photo {photo} alt={alt(i)} sizes={`(min-width: 900px) ${Math.round((photo.w / photo.h) * 400)}px, ${photo.w > photo.h ? '100vw' : '50vw'}`} eager={i <= 2} />;
+            return full
+              ? <a class="photo" style={`--r:${ratio}`} href={full}>{img}</a>
+              : <span class="photo" style={`--r:${ratio}`}>{img}</span>;
+          })}
+        </div>
+        <p class="tg"><a href={p.tgUrl}>{t.onTelegram}</a></p>
+      </section>
+    ))}
+  </div>
+  <dialog class="viewer" aria-label={t.viewer} data-viewer>
+    <img alt="" data-img />
+    <div class="bar">
+      <button type="button" data-prev aria-label={t.prevPhoto}>←</button>
+      <p aria-live="polite" data-count></p>
+      <button type="button" data-next aria-label={t.nextPhoto}>→</button>
+      <button type="button" class="close" data-close>{t.closePhoto}</button>
+    </div>
+  </dialog>
+</Base>
+<script>
+  // Photos open over the page, with arrows, swipes and Escape. Without JS each one is a link to the large file.
+  const viewer = document.querySelector<HTMLDialogElement>('[data-viewer]');
+  const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-album] a.photo')];
+  if (viewer && links.length) {
+    const img = viewer.querySelector<HTMLImageElement>('[data-img]')!;
+    const count = viewer.querySelector<HTMLElement>('[data-count]')!;
+    let at = 0;
+    const show = (i: number) => {
+      at = (i + links.length) % links.length;
+      const thumb = links[at].querySelector('img')!;
+      // The small copy is already loaded: show it at once, the large one replaces it.
+      img.src = thumb.currentSrc || thumb.src;
+      img.alt = thumb.alt;
+      count.textContent = `${at + 1} / ${links.length}`;
+      const want = at, large = new Image();
+      large.onload = () => { if (at === want && viewer.open) img.src = large.src; };
+      large.src = links[at].href;
+      for (const d of [1, -1]) new Image().src = links[(at + d + links.length) % links.length].href;
+    };
+    links.forEach((a, i) => a.addEventListener('click', (e) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+      e.preventDefault();
+      viewer.showModal();
+      show(i);
+    }));
+    viewer.querySelector('[data-prev]')!.addEventListener('click', () => show(at - 1));
+    viewer.querySelector('[data-next]')!.addEventListener('click', () => show(at + 1));
+    viewer.querySelector('[data-close]')!.addEventListener('click', () => viewer.close());
+    viewer.addEventListener('click', (e) => { if (e.target === viewer) viewer.close(); });
+    viewer.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') show(at - 1);
+      if (e.key === 'ArrowRight') show(at + 1);
+    });
+    let x0 = 0, y0 = 0;
+    viewer.addEventListener('touchstart', (e) => { x0 = e.touches.length === 1 ? e.touches[0].clientX : NaN; y0 = e.touches[0].clientY; }, { passive: true });
+    viewer.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+      if (Math.abs(dx) > 48 && Math.abs(dx) > 2 * Math.abs(dy)) show(at + (dx < 0 ? 1 : -1));
+    });
+    viewer.addEventListener('close', () => links[at].focus());
+  }
+</script>
+<style>
+  .back { margin: 0; padding-top: 40px; font-size: 15px; }
+  .back a, .tg a { display: inline-flex; align-items: center; min-height: var(--tap-min); color: var(--muted); }
+  .count { margin: 4px 0 0; font-size: 15px; }
+  .part { margin-top: 32px; }
+  .part + .part { margin-top: 48px; }
+  .caption { max-width: var(--reading-max); margin-bottom: 24px; font-family: var(--font-serif); font-size: 20px; line-height: 1.6; text-wrap: pretty; }
+  .caption p { margin: 0 0 16px; }
+  .caption > :last-child { margin-bottom: 0; }
+  /* Rows of equal height without cropping: each photo grows in proportion to its width. The last row keeps its size. */
+  .photos { --row: 210px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .photos::after { content: ''; flex: 1e4 1 0; }
+  .photo { flex: calc(var(--r) * 100) 1 calc(var(--r) * var(--row)); max-width: 100%; }
+  .photo :global(img) { width: 100%; height: auto; border-radius: var(--radius-md); }
+  .tg { margin: 8px 0 0; font-size: 15px; }
+  @media (min-width: 900px) { .photos { --row: 320px; gap: 12px; } }
+
+  .viewer { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 0; border: 0; background: #12100e; color: #ece4d7; overflow: hidden; touch-action: pan-y pinch-zoom; }
+  .viewer[open] { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+  .viewer img { width: 100%; height: 100%; object-fit: contain; }
+  .bar { display: grid; grid-template-columns: auto auto auto 1fr; align-items: center; gap: 4px; padding: 4px 12px max(4px, env(safe-area-inset-bottom)); font-size: 15px; }
+  .bar p { margin: 0; min-width: 64px; text-align: center; font-variant-numeric: tabular-nums; }
+  .bar button { min-width: var(--tap-min); min-height: var(--tap-min); padding: 0 8px; }
+  .bar button:focus-visible { outline-color: #e08a5c; outline-offset: -3px; }
+  .close { justify-self: end; }
+</style>

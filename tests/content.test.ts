@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { finish, pickSource, type Post, type RawContent } from '../src/lib/content';
 import { parseServiceAccount } from '../src/lib/firebaseAdmin';
 import { plain } from '../src/lib/firestore';
-import { albums, noteTitle, postView, readingMinutes } from '../src/lib/view';
+import { postView, readingMinutes } from '../src/lib/view';
 import { renderMarkdown } from '../src/lib/markdown';
 
 describe('pickSource', () => {
@@ -126,13 +126,5 @@ describe('Firestore helpers', () => {
   it('explains a broken service account value', () => {
     expect(() => parseServiceAccount('not base64 json')).toThrow(/base64/);
     expect(() => parseServiceAccount(Buffer.from('{}').toString('base64'))).toThrow(/project_id/);
-  });
-});
-
-describe('albums', () => {
-  const note = (id: string, place?: string, n = 1) => ({ id, date: '2026-09-26T00:00:00Z', text: 'x', place, year: place ? 2026 : undefined, tgUrl: 'https://t.me/essentis/' + id, photos: Array.from({ length: n }, () => ({ key: 'k', w: 1, h: 1 })) });
-  it('keeps placed albums and leaves memes and videos out', () => {
-    const kept = albums([note('1'), note('2', 'Karkonosze', 10), note('3', 'Zakopane, Poland', 0), note('4', undefined, 5)]);
-    expect(kept.map(noteTitle)).toEqual(['Karkonosze // 2026']);
   });
 });

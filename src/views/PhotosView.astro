@@ -1,0 +1,53 @@
+---
+import Base from '../layouts/Base.astro';
+import Photo from '../components/Photo.astro';
+import { albums } from '../lib/albums';
+import { getContent } from '../lib/content';
+import { albumUrl, routes } from '../lib/routes';
+import { ui, type Lang } from '../data/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang];
+const all = albums((await getContent()).notes);
+const years = [...new Set(all.map((a) => a.year))];
+---
+<Base {lang} title={t.photosTitle} description={t.photosIntro} alternates={routes.photos} current="photos">
+  <div class="col">
+    <h1 class="page-title">{t.photosTitle}</h1>
+    <p class="intro muted">{t.photosIntro}</p>
+    {all.length === 0 && <p class="empty muted">{t.noAlbumsYet}</p>}
+    {years.map((y, yi) => (
+      <section class="year" aria-labelledby={`y${y}`}>
+        <h2 id={`y${y}`} class="year-h">{y}</h2>
+        <ul class="albums">
+          {all.filter((a) => a.year === y).map((a, i) => (
+            <li>
+              <a class="album" href={albumUrl(a.slug, lang)}>
+                <Photo photo={a.cover} alt="" class="cover" sizes="(min-width: 900px) 260px, 50vw" eager={yi === 0 && i < 2} />
+                <span class="ttl">{a.place}</span>
+                <span class="meta">{t.photos(a.count)}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </div>
+</Base>
+<style>
+  .col { padding-top: 64px; }
+  .intro { margin: 8px 0 0; max-width: 600px; }
+  .empty { margin: 48px 0 0; }
+  .year { display: grid; gap: 8px; margin-top: 48px; }
+  .year-h { margin: 0; font-size: 22px; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .albums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; list-style: none; margin: 0; padding: 0; }
+  .album { display: block; text-decoration: none; }
+  .album :global(.cover) { width: 100%; height: auto; aspect-ratio: 1 !important; object-fit: cover; border-radius: var(--radius-lg); margin-bottom: 10px; }
+  .album:hover .ttl { color: var(--rust); }
+  .meta { margin-top: 0; }
+  @media (min-width: 900px) {
+    .year { grid-template-columns: 160px minmax(0, 1fr); gap: 32px; }
+    .albums { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px 24px; }
+  }
+</style>
