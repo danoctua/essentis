@@ -4,6 +4,7 @@ import Avatar from '../components/Avatar.astro';
 import Mark from '../components/Mark.astro';
 import { getContent } from '../lib/content';
 import { renderMarkdown } from '../lib/markdown';
+import { inlineLinks } from '../lib/inline';
 import { routes } from '../lib/routes';
 import { site } from '../lib/site';
 import { ui, type Lang } from '../data/ui';
@@ -34,7 +35,7 @@ const span = (from: number, to?: number | null) =>
           {c.work.map((w) => (
             <li>
               <span class="muted num">{span(w.from, w.to)}</span>
-              <span><span class="strong">{w.role}, {w.company}</span><span class="muted small">{w.line[lang] ?? w.line.be}</span></span>
+              <span><span class="strong">{w.role}, {w.company}</span><span class="muted small" set:html={inlineLinks(w.line[lang] ?? w.line.be ?? '')} /></span>
             </li>
           ))}
         </ul>}
@@ -43,7 +44,7 @@ const span = (from: number, to?: number | null) =>
           {c.projects.map((p) => (
             <li><span>
               {p.url ? <a class="strong" href={p.url}>{p.name}</a> : <span class="strong">{p.name}</span>}
-              <span class="muted small">{p.text[lang] ?? p.text.be}</span>
+              <span class="muted small" set:html={inlineLinks(p.text[lang] ?? p.text.be ?? '')} />
             </span></li>
           ))}
         </ul>}

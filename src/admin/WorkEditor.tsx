@@ -80,6 +80,7 @@ export function WorkEditor() {
       <p><button type="button" class="btn" onClick={() => setL({ ...l, work: [...l.work, { id: newId('work'), from: new Date().getFullYear(), to: null, role: '', company: '', line: {}, order: l.work.length }] })}>{s.add}</button></p>
 
       <h2 class="h2">{s.projects}</h2>
+      <p class="hint">{s.linksHint}</p>
       {l.projects.map((p, i) => (
         <fieldset class="card">
           <legend>{p.name || s.name}</legend>
