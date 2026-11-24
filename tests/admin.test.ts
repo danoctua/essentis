@@ -1,3 +1,4 @@
+import { byDate } from '../src/admin/util';
 import { describe, expect, it } from 'vitest';
 import { parseWebConfig } from '../src/admin/config';
 import { makeSlug } from '../src/lib/slug';
@@ -72,4 +73,10 @@ describe('media', () => {
     expect(html).toMatch(/width="600" height="300"/);
     expect(html).not.toContain('1600w');
   });
+});
+
+it('lists undated drafts first, then posts by their own date, whenever they were edited', () => {
+  const p = (id: string, publishedAt?: string, updatedAt = '2026-11-24') => ({ id, publishedAt, updatedAt });
+  const ids = [p('old', '2024-02-12'), p('new', '2026-02-13', '2026-01-01'), p('draft', undefined, '2026-01-02'), p('mid', '2025-05-23'), p('draft2')].sort(byDate).map((x) => x.id);
+  expect(ids).toEqual(['draft2', 'draft', 'new', 'mid', 'old']);
 });

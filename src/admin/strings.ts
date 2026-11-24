@@ -21,7 +21,7 @@ export const s = {
   newPost: 'Новы допіс', newPostIn: 'Мова арыгіналу',
   draft: 'Чарнавік', published: 'Апублікаваны',
   untitled: 'Без назвы',
-  updated: 'Зьменены',
+  updated: 'Зьменены', noDate: 'без даты',
   noPosts: 'Допісаў пакуль няма.',
   save: 'Захаваць', saving: 'Захоўваю…', saved: 'Захавана', unsaved: 'Ёсьць незахаваныя зьмены',
   publish: 'Апублікаваць', unpublish: 'Зьняць з публікацыі',

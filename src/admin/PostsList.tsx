@@ -2,7 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { createPost, listPosts, type EditPost } from './data';
 import { s } from './strings';
 import { when } from './util';
-import { LANGS, type Lang } from '../data/ui';
+import { fmtDate, LANGS, type Lang } from '../data/ui';
 
 export function PostsList() {
   const [posts, setPosts] = useState<EditPost[] | null>(null);
@@ -38,7 +38,8 @@ export function PostsList() {
                 <span class="meta">
                   <span class={`badge ${p.status}`}>{p.status === 'published' ? s.published : s.draft}</span>
                   {' '}{p.originalLang.toUpperCase()}{v?.body ? ` + ${other.toUpperCase()}` : v?.title ? ` (${other.toUpperCase()}: ${s.title.toLowerCase()})` : ''}
-                  {' · '}{s.updated} {when(p.updatedAt)}
+                  {' · '}{p.publishedAt ? fmtDate(new Date(p.publishedAt), 'be') : s.noDate}
+                  {' · '}{s.updated.toLowerCase()} {when(p.updatedAt)}
                 </span>
               </a></li>
             );

@@ -7,6 +7,7 @@ import {
   collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, setDoc, Timestamp, writeBatch, type DocumentData,
 } from 'firebase/firestore';
 import { firebase } from './firebase';
+import { byDate } from './util';
 import type { Lang } from '../data/ui';
 import type { AboutPage, NowPage, Post, Project, UsesPage, Work } from '../lib/content';
 
@@ -25,7 +26,7 @@ const read = <T>(id: string, data: DocumentData) => ({ ...(iso(data) as object),
 
 export async function listPosts(): Promise<EditPost[]> {
   const snap = await getDocs(collection(db(), 'posts'));
-  return snap.docs.map((d) => read<EditPost>(d.id, d.data())).sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
+  return snap.docs.map((d) => read<EditPost>(d.id, d.data())).sort(byDate);
 }
 
 export async function getPost(id: string): Promise<EditPost | null> {
