@@ -1,8 +1,13 @@
+import asyncio
 from datetime import datetime, timezone
 
+import pytest
+from telethon import errors
 from telethon.tl import types as tl
 
-from tg_sync.config import ROOT, Config
+from tg_sync import telegram
+
+from tg_sync.config import ROOT, Config, ConfigError
 from tg_sync.notes import group
 from tg_sync.telegram import to_msg
 
@@ -55,3 +60,43 @@ def test_config():
     c = Config({"TG_API_ID": "  # from my.telegram.org", "TG_CHANNEL": "@essentis", "TG_SESSION": "sessions/essentis"})
     assert c.missing("TG_API_ID") == ["TG_API_ID"] and c.channel == "essentis"
     assert c.session == ROOT / "sessions/essentis.session"
+
+
+class Client:
+    """Enough of TelegramClient to walk through a QR login."""
+    def __init__(self, waits): self.waits, self.passwords, self.recreated = list(waits), [], 0
+    url, expires = "tg://login?token=x", D
+    async def qr_login(self): return self
+    async def recreate(self): self.recreated += 1
+    async def is_user_authorized(self): return False
+    async def wait(self):
+        if (e := self.waits.pop(0)): raise e
+    async def sign_in(self, password):
+        self.passwords.append(password)
+        if password == "bad": raise errors.PasswordHashInvalidError(None)
+
+
+def test_qr_login_renews_then_asks_for_the_password(monkeypatch, capsys):
+    answers = iter(["bad", "good"])
+    monkeypatch.setattr(telegram.getpass, "getpass", lambda _: next(answers))
+    c = Client([asyncio.TimeoutError(), errors.SessionPasswordNeededError(None)])
+    asyncio.run(telegram._by_qr(c))
+    assert c.recreated == 1 and c.passwords == ["bad", "good"] and "█" in capsys.readouterr().out
+
+
+def test_qr_login_without_a_password():
+    c = Client([None])
+    asyncio.run(telegram._by_qr(c))
+    assert c.passwords == []
+
+
+def test_phone_login_says_where_the_code_went_or_that_there_is_none(monkeypatch, capsys):
+    class Phone:
+        def __init__(self, how): self.how = how
+        async def send_code_request(self, phone): return tl.auth.SentCode(type=self.how, phone_code_hash="SECRET")
+        async def sign_in(self, phone, code, phone_code_hash): assert (code, phone_code_hash) == ("12345", "SECRET")
+    monkeypatch.setattr("builtins.input", lambda q: "12345" if "Code" in q else "+10000000000")
+    asyncio.run(telegram._by_phone(Phone(tl.auth.SentCodeTypeApp(length=5))))
+    assert "Telegram app" in capsys.readouterr().out
+    with pytest.raises(ConfigError, match="QR"):
+        asyncio.run(telegram._by_phone(Phone(tl.auth.SentCodeTypeSetUpEmailRequired())))

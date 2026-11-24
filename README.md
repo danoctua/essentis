@@ -105,7 +105,7 @@ Needs [uv](https://docs.astral.sh/uv/); it installs Python 3.12 and the librarie
 
 1. my.telegram.org → API development tools → create an app. `cp tools/tg_sync/.env.example tools/tg_sync/.env` and fill in `TG_API_ID` and `TG_API_HASH`.
 2. In the repo's `.env`, next to `FIREBASE_SERVICE_ACCOUNT`, set `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` (the same values as in Vercel; Cloudflare shows the secret once, so if it is lost, create a second token for this bucket). `VERCEL_DEPLOY_HOOK_URL` is needed only for `--publish`.
-3. `npm run tg:login` once, in your own terminal. It asks for your phone number, the code and your two-step password, and saves the session to the git-ignored `sessions/` folder. The session is a login to your whole account: never copy or upload it. To end it: Telegram → Settings → Devices, delete the file, log in again.
+3. `npm run tg:login` once, in your own terminal. Scan the QR code it shows with your phone (Telegram → Settings → Devices → Link Desktop Device) and enter your two-step password if you have one. (`npm run tg:login -- --phone` asks for a code instead; Telegram sends it in the app, not by SMS.) It saves the session to the git-ignored `sessions/` folder. The session is a login to your whole account: never copy or upload it. To end it: Telegram → Settings → Devices, delete the file, log in again.
 4. `npm run tg:check` tests Telegram, Firestore and R2.
 
 | Command | What it does |

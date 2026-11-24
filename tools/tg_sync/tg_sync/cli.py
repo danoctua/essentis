@@ -1,6 +1,8 @@
 """login | check | sync (the default)."""
 import argparse
 import asyncio
+import logging
+import sqlite3
 import sys
 import urllib.error
 import urllib.request
@@ -99,16 +101,25 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("command", nargs="?", choices=["sync", "login", "check"], default="sync")
     p.add_argument("--full", action="store_true", help="re-read every post: edits, and posts deleted from the channel")
     p.add_argument("--dry-run", action="store_true", help="show what would happen; write nothing")
+    p.add_argument("--phone", action="store_true", help="login: with a code from Telegram instead of a QR code")
+    p.add_argument("--debug", action="store_true", help="log the conversation with Telegram (request names, no contents)")
     p.add_argument("--publish", action="store_true", help="rebuild the site at the end, if anything changed")
     a = p.parse_args(argv)
+    if a.debug:
+        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s", datefmt="%H:%M:%S")
+        logging.getLogger("tg_sync").setLevel(logging.DEBUG)
+        logging.getLogger("telethon").setLevel(logging.DEBUG)
     cfg = Config()
     try:
         if a.command == "login":
-            print(f"Signed in as {asyncio.run(telegram.login(cfg))}. Session: {cfg.session}")
+            print(f"Signed in as {asyncio.run(telegram.login(cfg, a.phone))}. Session: {cfg.session}")
             return 0
         return asyncio.run(check(cfg) if a.command == "check" else sync(cfg, a))
     except ConfigError as e:
         print(e, file=sys.stderr)
+        return 2
+    except sqlite3.OperationalError:
+        print("The Telegram session is in use: stop the other tg:login or tg:sync first (Ctrl+C there).", file=sys.stderr)
         return 2
     except (BotoCoreError, ClientError) as e:
         print(f"R2 refused: {e}. Check the R2_* values and that the token may write to this bucket.", file=sys.stderr)

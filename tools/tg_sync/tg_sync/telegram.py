@@ -1,14 +1,18 @@
 """The only file that talks to Telegram."""
+import asyncio
 import getpass
+import logging
 import os
 from contextlib import asynccontextmanager
 
-from telethon import TelegramClient
+import segno
+from telethon import TelegramClient, errors
 from telethon.tl import types as tl
 
 from .config import TELEGRAM, Config, ConfigError
 from .notes import Msg, Photo
 
+log = logging.getLogger("tg_sync")
 MAX_FILE = 20 * 1024 * 1024
 IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
@@ -57,17 +61,84 @@ def _client(cfg: Config) -> TelegramClient:
     return TelegramClient(str(cfg.session), api_id, cfg.get("TG_API_HASH"), flood_sleep_threshold=300)
 
 
-async def login(cfg: Config) -> str:
-    client = _client(cfg)
-    await client.start(
-        phone=lambda: input("Phone number (with country code): ").strip(),
-        code_callback=lambda: input("Code from Telegram: ").strip(),
-        password=lambda: getpass.getpass("Two-step password: "),
-    )
+# Telegram decides where the code goes; other apps' logins rarely get an SMS.
+SENT_TO = {
+    tl.auth.SentCodeTypeApp: 'in the Telegram app, in the chat "Telegram" on a device where you are signed in',
+    tl.auth.SentCodeTypeSms: "by SMS",
+    tl.auth.SentCodeTypeSmsWord: "by SMS, as a word",
+    tl.auth.SentCodeTypeSmsPhrase: "by SMS, as a phrase",
+    tl.auth.SentCodeTypeCall: "in a phone call",
+    tl.auth.SentCodeTypeMissedCall: "as the last digits of a number that calls you and hangs up",
+    tl.auth.SentCodeTypeFragmentSms: "on fragment.com",
+    tl.auth.SentCodeTypeEmailCode: "by email",
+}
+
+
+async def _password(client: TelegramClient) -> None:
+    for left in (2, 1, 0):
+        try:
+            await client.sign_in(password=getpass.getpass("Two-step password: "))
+            return
+        except errors.PasswordHashInvalidError:
+            if not left:
+                raise ConfigError("Wrong password three times. Run it again.") from None
+            print("Wrong password, try again.")
+
+
+async def _by_qr(client: TelegramClient) -> None:
+    print("On your phone: Telegram > Settings > Devices > Link Desktop Device, and scan this code.")
+    print("It renews by itself until you scan it. Ctrl+C stops.\n")
     try:
+        qr = await client.qr_login()
+        while True:
+            log.debug("QR code issued, expires %s", qr.expires)
+            segno.make(qr.url, error="l").terminal(compact=True)
+            try:
+                await qr.wait()
+                return
+            except asyncio.TimeoutError:
+                print("The code expired. A new one:\n")
+                await qr.recreate()
+                if await client.is_user_authorized():  # scanned just as it expired
+                    return
+    except errors.SessionPasswordNeededError:
+        await _password(client)
+
+
+async def _by_phone(client: TelegramClient) -> None:
+    phone = input("Phone number (with country code): ").strip()
+    sent = await client.send_code_request(phone)
+    how = getattr(sent, "type", sent)
+    # Names only: the answer also holds the login hash.
+    log.debug("code: %s, next: %s, resend after: %s s", type(how).__name__, type(getattr(sent, "next_type", None)).__name__, getattr(sent, "timeout", None))
+    if type(how) not in SENT_TO:
+        raise ConfigError(f"Telegram will not send a usable code to this app ({type(how).__name__}). Use the QR code: npm run tg:login")
+    print(f"Telegram says it sent the code {SENT_TO[type(how)]}.")
+    for left in (2, 1, 0):
+        try:
+            await client.sign_in(phone, input("Code from Telegram: ").strip(), phone_code_hash=sent.phone_code_hash)
+            return
+        except errors.SessionPasswordNeededError:
+            return await _password(client)
+        except errors.PhoneCodeInvalidError:
+            if not left:
+                raise ConfigError("Wrong code three times. Run it again.") from None
+            print("Wrong code, try again.")
+
+
+async def login(cfg: Config, phone: bool = False) -> str:
+    client = _client(cfg)
+    await client.connect()
+    try:
+        if not await client.is_user_authorized():
+            await (_by_phone(client) if phone else _by_qr(client))
         me = await client.get_me()
         os.chmod(cfg.session, 0o600)
         return f"@{me.username}" if me.username else "your account"
+    except errors.FloodWaitError as e:
+        raise ConfigError(f"Telegram asks to wait {e.seconds // 60 + 1} min before another attempt.") from None
+    except errors.RPCError as e:
+        raise ConfigError(f"Telegram refused: {e}") from None
     finally:
         await client.disconnect()
 
