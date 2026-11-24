@@ -4,7 +4,7 @@
  * anything stored here can end up on the public site.
  */
 import {
-  collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, setDoc, Timestamp, writeBatch, type DocumentData,
+  collection, doc, getDoc, getDocs, onSnapshot, serverTimestamp, Timestamp, writeBatch, type DocumentData, type WriteBatch,
 } from 'firebase/firestore';
 import { firebase } from './firebase';
 import { byDate } from './util';
@@ -34,30 +34,45 @@ export async function getPost(id: string): Promise<EditPost | null> {
   return d.exists() ? read<EditPost>(d.id, d.data()) : null;
 }
 
-export async function createPost(lang: Lang): Promise<string> {
-  const ref = doc(collection(db(), 'posts'));
-  await setDoc(ref, { originalLang: lang, status: 'draft', topics: [], variants: { [lang]: { title: '' } }, updatedAt: Timestamp.now() });
-  return ref.id;
-}
+/** Remembers that the site no longer shows what is saved; "update site" is then offered. */
+const markChanged = (batch: WriteBatch) => batch.set(doc(db(), 'meta', 'changes'), { at: serverTimestamp() });
 
-export async function savePost(p: EditPost): Promise<string> {
+/** An id for a post that does not exist yet. Nothing is written until the first save. */
+export const newPostId = () => doc(collection(db(), 'posts')).id;
+export const blankPost = (id: string, lang: Lang): EditPost =>
+  ({ id, originalLang: lang, status: 'draft', topics: [], variants: { [lang]: { title: '' } }, updatedAt: '' });
+
+/** `live`: the post is on the site now, or was before this save. */
+export async function savePost(p: EditPost, live: boolean): Promise<string> {
   const { id, ...rest } = p;
   const updatedAt = new Date().toISOString();
-  await setDoc(doc(db(), 'posts', id), { ...rest, publishedAt: ts(p.publishedAt), updatedAt: ts(updatedAt) });
+  const batch = writeBatch(db());
+  batch.set(doc(db(), 'posts', id), { ...rest, publishedAt: ts(p.publishedAt), updatedAt: ts(updatedAt) });
+  if (live) markChanged(batch);
+  await batch.commit();
   return updatedAt;
 }
 
-export const deletePost = (id: string) => deleteDoc(doc(db(), 'posts', id));
+export async function deletePost(id: string, live: boolean): Promise<void> {
+  const batch = writeBatch(db());
+  batch.delete(doc(db(), 'posts', id));
+  if (live) markChanged(batch);
+  await batch.commit();
+}
 
 type Pages = { now: NowPage; about: AboutPage; uses: UsesPage };
 export async function getPage<K extends keyof Pages>(id: K): Promise<Partial<Pages[K]>> {
   const d = await getDoc(doc(db(), 'pages', id));
   return d.exists() ? (iso(d.data()) as Pages[K]) : {};
 }
-export async function savePage<K extends keyof Pages>(id: K, data: Partial<Pages[K]>): Promise<void> {
-  const out: DocumentData = { ...data };
-  if (id === 'now') out.updatedAt = Timestamp.now();
-  await setDoc(doc(db(), 'pages', id), out);
+/** Writes one or more pages at once. */
+export async function savePages(pages: { [K in keyof Pages]?: Partial<Pages[K]> }): Promise<void> {
+  const batch = writeBatch(db());
+  for (const [id, data] of Object.entries(pages)) {
+    batch.set(doc(db(), 'pages', id), id === 'now' ? { ...data, updatedAt: Timestamp.now() } : data);
+  }
+  markChanged(batch);
+  await batch.commit();
 }
 
 type Lists = { work: Work; projects: Project };
@@ -65,15 +80,29 @@ export async function getList<K extends keyof Lists>(name: K): Promise<Lists[K][
   const snap = await getDocs(collection(db(), name));
   return snap.docs.map((d) => read<Lists[K]>(d.id, d.data())).sort((a, b) => a.order - b.order);
 }
-/** Writes the whole list in one batch, in the order given, and deletes entries that were removed. */
-export async function saveList<K extends keyof Lists>(name: K, items: Lists[K][], removed: string[]): Promise<void> {
+/** Writes both lists in one batch, in the order given, and deletes the entries in `gone`. */
+export async function saveLists(lists: { [K in keyof Lists]: Lists[K][] }, gone: string[]): Promise<void> {
   const batch = writeBatch(db());
-  items.forEach(({ id, ...rest }, order) => batch.set(doc(db(), name, id), { ...rest, order }));
-  removed.forEach((id) => batch.delete(doc(db(), name, id)));
+  for (const name of ['work', 'projects'] as const) {
+    const keep = lists[name].filter((x) => !gone.includes(x.id));
+    keep.forEach(({ id, ...rest }, order) => batch.set(doc(db(), name, id), { ...rest, order }));
+    lists[name].filter((x) => gone.includes(x.id)).forEach((x) => batch.delete(doc(db(), name, x.id)));
+  }
+  markChanged(batch);
   await batch.commit();
 }
 export const newId = (name: keyof Lists) => doc(collection(db(), name)).id;
 
-export interface PublishState { lastAt?: string; lastError?: string | null }
-export const watchPublish = (cb: (s: PublishState) => void, onError: (e: Error) => void) =>
-  onSnapshot(doc(db(), 'meta', 'publish'), (d) => cb((iso(d.data() ?? {}) as PublishState)), onError);
+export interface PublishState { lastAt?: string; lastError?: string | null; changedAt?: string }
+/** Saved after the last rebuild started, so not on the site yet. */
+export const isPending = (p: PublishState) => !!p.changedAt && (!p.lastAt || p.changedAt > p.lastAt);
+
+export function watchPublish(cb: (s: PublishState) => void, onError: (e: Error) => void): () => void {
+  let state: PublishState = {};
+  const put = (s: PublishState) => cb(state = { ...state, ...s });
+  const offs = [
+    onSnapshot(doc(db(), 'meta', 'publish'), (d) => put(iso(d.data() ?? {}) as PublishState), onError),
+    onSnapshot(doc(db(), 'meta', 'changes'), (d) => put({ changedAt: (iso(d.data({ serverTimestamps: 'estimate' }) ?? {}) as { at?: string }).at }), onError),
+  ];
+  return () => offs.forEach((off) => off());
+}

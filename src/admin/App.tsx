@@ -1,12 +1,14 @@
 /**
  * The admin: sign-in gate, navigation and the "update site" button. Routes live in the hash
- * (#/, #/post/{id}, #/now, #/about, #/work) so /admin stays one static page.
+ * (#/, #/post/{id}, #/new, #/now, #/about, #/work) so /admin stays one static page.
  */
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useMemo, useState } from 'preact/hooks';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { api, firebase } from './firebase';
-import { watchPublish, type PublishState } from './data';
+import { newPostId, watchPublish, type EditPost, type PublishState } from './data';
+import { readDraft } from './drafts';
+import { publishHint, Shell as ShellContext, type ShellState } from './TopBar';
 import { s } from './strings';
 import { PostsList } from './PostsList';
 import { PostEditor } from './PostEditor';
@@ -14,7 +16,7 @@ import { NowEditor } from './NowEditor';
 import { AboutEditor } from './AboutEditor';
 import { WorkEditor } from './WorkEditor';
 import { markPaths } from '../lib/graphics';
-import { unsaved, when } from './util';
+import { unsaved } from './util';
 
 type Gate =
   | { k: 'loading' } | { k: 'broken'; why: string } | { k: 'out' }
@@ -29,57 +31,83 @@ function useHash() {
   const [hash, setHash] = useState(location.hash || '#/');
   useEffect(() => {
     let prev = location.hash || '#/';
+    const follow = () => { prev = location.hash || '#/'; setHash(prev); };
     const onChange = () => {
       if (unsaved.current && !confirm(s.leave)) { history.replaceState(null, '', prev); return; }
       unsaved.current = false;
-      prev = location.hash || '#/';
-      setHash(prev);
+      follow();
+      scrollTo(0, 0);
     };
     const onLeave = (e: BeforeUnloadEvent) => { if (unsaved.current) e.preventDefault(); };
     addEventListener('hashchange', onChange);
+    addEventListener('admin:hash', follow);
     addEventListener('beforeunload', onLeave);
-    return () => { removeEventListener('hashchange', onChange); removeEventListener('beforeunload', onLeave); };
+    return () => { removeEventListener('hashchange', onChange); removeEventListener('admin:hash', follow); removeEventListener('beforeunload', onLeave); };
   }, []);
   return hash;
 }
 
-function PublishButton() {
-  const [state, setState] = useState<PublishState>({});
+/** `html[data-typing]` while a text field has the focus: the bottom navigation would sit on top of the keyboard. */
+function useTyping() {
+  useEffect(() => {
+    const root = document.documentElement;
+    const isField = (e: EventTarget | null) => e instanceof HTMLElement && (e.isContentEditable || /^(?:INPUT|TEXTAREA|SELECT)$/.test(e.tagName));
+    const on = (e: FocusEvent) => { root.toggleAttribute('data-typing', isField(e.target)); };
+    const off = () => { root.removeAttribute('data-typing'); };
+    addEventListener('focusin', on);
+    addEventListener('focusout', off);
+    return () => { off(); removeEventListener('focusin', on); removeEventListener('focusout', off); };
+  }, []);
+}
+
+function usePublish(): Pick<ShellState, 'publish' | 'busy' | 'msg' | 'update'> {
+  const [publish, setPublish] = useState<PublishState>({});
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
-  useEffect(() => watchPublish(setState, () => {}), []);
-  const go = async () => {
+  useEffect(() => watchPublish(setPublish, () => {}), []);
+  useEffect(() => {
+    if (!msg || busy) return;
+    const t = setTimeout(() => setMsg(''), 12_000);
+    return () => clearTimeout(t);
+  }, [msg, busy]);
+  const update = async () => {
     setBusy(true); setMsg(s.publishing);
     try { await api('/api/publish/'); setMsg(s.publishStarted); } catch (e) { setMsg(`${s.error}: ${(e as Error).message}`); }
     setBusy(false);
   };
-  return (
-    <div class="publish">
-      <button type="button" class="btn primary" onClick={go} disabled={busy}>{s.publishSite}</button>
-      <p class="hint" role="status">{msg || `${s.lastPublish}: ${state.lastAt ? when(state.lastAt) : s.never}`}{state.lastError && !msg ? ` (${state.lastError})` : ''}</p>
-    </div>
-  );
+  return { publish, busy, msg, update };
 }
 
-function Shell({ user, hash }: { user: User; hash: string }) {
-  const [, route, id] = hash.split('/');
-  const nav = [['#/', s.posts, !route || route === 'post'], ['#/now', s.now, route === 'now'], ['#/about', s.about, route === 'about'], ['#/work', s.work, route === 'work']] as const;
+function Admin({ user, hash }: { user: User; hash: string }) {
+  useTyping();
+  const pub = usePublish();
+  const [, route, part] = hash.split('/');
+  // A new post gets its id here and is written on the first save; text left from last time keeps its own.
+  const fresh = useMemo(() => (route === 'new' ? readDraft<EditPost>('post:new')?.data.id ?? newPostId() : ''), [hash]);
+  const id = route === 'new' ? fresh : route === 'post' ? part : '';
+  const nav = ([['#/', s.posts, s.posts, ''], ['#/now', s.now, s.now, 'now'], ['#/about', s.about, s.about, 'about'], ['#/work', s.work, s.workShort, 'work']] as const)
+    .map(([href, long, short, r]) => ({ href, long, short, on: r ? route === r : !route || !!id }));
+  const shell: ShellState = { email: user.email ?? '', ...pub, signOut: () => signOut(firebase().auth) };
   return (
-    <>
+    <ShellContext.Provider value={shell}>
       <header class="bar">
         <a class="brand" href="/" target="_blank" rel="noopener"><Mark /><span>essentis</span></a>
-        <nav aria-label={s.admin}><ul>{nav.map(([href, label, on]) => <li><a href={href} aria-current={on ? 'page' : undefined}>{label}</a></li>)}</ul></nav>
-        <PublishButton />
-        <div class="who"><span>{user.email}</span><button type="button" class="link" onClick={() => signOut(firebase().auth)}>{s.signOut}</button></div>
+        <nav aria-label={s.admin}><ul>{nav.map((n) => <li><a href={n.href} aria-current={n.on ? 'page' : undefined}>{n.long}</a></li>)}</ul></nav>
+        <div class="publish">
+          <button type="button" class="btn primary" onClick={pub.update} disabled={pub.busy}>{s.publishSite}</button>
+          <p class="hint" role="status">{publishHint(shell)}</p>
+        </div>
+        <div class="who"><span>{user.email}</span><button type="button" class="link" onClick={shell.signOut}>{s.signOut}</button></div>
       </header>
       <main id="main" class="page">
-        {route === 'post' && id ? <PostEditor key={id} id={id} />
+        {id ? <PostEditor key={id} id={id} isNew={route === 'new'} />
           : route === 'now' ? <NowEditor />
           : route === 'about' ? <AboutEditor />
           : route === 'work' ? <WorkEditor />
           : <PostsList />}
       </main>
-    </>
+      {!id && <nav class="bottom" aria-label={s.admin}><ul>{nav.map((n) => <li><a href={n.href} aria-current={n.on ? 'page' : undefined}>{n.short}</a></li>)}</ul></nav>}
+    </ShellContext.Provider>
   );
 }
 
@@ -110,7 +138,7 @@ export default function App() {
     try { await signInWithPopup(firebase().auth, provider); } catch (e) { setGate({ k: 'broken', why: (e as Error).message }); }
   };
 
-  if (gate.k === 'in') return <Shell user={gate.user} hash={hash} />;
+  if (gate.k === 'in') return <Admin user={gate.user} hash={hash} />;
   return (
     <main class="gate">
       <Mark />
@@ -123,12 +151,12 @@ export default function App() {
         <p>{s.noAccessHint}</p>
         <pre class="cmd">npm run admin:grant -- {gate.user.email}</pre>
         <p>{s.noAccessThen}</p>
-        <div class="row"><button type="button" class="btn primary" onClick={() => check(gate.user, true)}>{s.checkAgain}</button><button type="button" class="btn" onClick={() => signOut(firebase().auth)}>{s.signOut}</button></div>
+        <div class="actions"><button type="button" class="btn primary" onClick={() => check(gate.user, true)}>{s.checkAgain}</button><button type="button" class="btn" onClick={() => signOut(firebase().auth)}>{s.signOut}</button></div>
       </>}
       {gate.k === 'rules' && <>
         <p class="err">{s.rulesMissing}</p>
         <p>{s.rulesHint}</p>
-        <div class="row"><button type="button" class="btn primary" onClick={() => check(gate.user, true)}>{s.checkAgain}</button><button type="button" class="btn" onClick={() => signOut(firebase().auth)}>{s.signOut}</button></div>
+        <div class="actions"><button type="button" class="btn primary" onClick={() => check(gate.user, true)}>{s.checkAgain}</button><button type="button" class="btn" onClick={() => signOut(firebase().auth)}>{s.signOut}</button></div>
       </>}
     </main>
   );

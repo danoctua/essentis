@@ -261,3 +261,13 @@ Replaces "there are no note pages on the site". Posts with a "Place // Year" cap
 ## Long reads from the channel (2026-11-24)
 
 `npm run tg:draft` turns channel posts over 100 words into draft posts (`posts/tg-<id>`), with Telegram's formatting converted to Markdown (`tools/tg_sync/tg_sync/markdown.py`). Publishing stays by hand in the admin: the posts have no titles or topics of their own. `sync/telegram.drafted` remembers what was made. Post bodies may show photos under `notes/` (srcset included); upload signing still covers only `posts/`.
+
+## Admin on a phone (2026-11-24)
+
+- **Layout:** one sticky 56 px bar per screen (title or back, save state, Save), bottom navigation under 900 px (hidden while typing), "update site" always in the menu. Controls are at least 44 px, fields at least 16 px.
+- **Text editor:** uncontrolled (see `MdEditor.tsx`: writing `value` back into it froze the page), 17 px IBM Plex Sans, spelling and autocorrect on, formatting bar sticky under the top bar. Not above the keyboard: browsers disagree on where that is.
+- **Unsaved text** is kept in the browser (`drafts.ts`) and restored on the next visit. Leaving asks only when the browser refuses to keep it.
+- **Posts:** Text, Settings and Preview. A new post (`#/new`) is written on its first save. First publishing asks, showing the address. No check for edits made elsewhere: there is one admin.
+- **About, Work:** one section open at a time; removing a Work entry can be undone until Save.
+- **Not on the site yet:** saving anything public sets `meta/changes.at`; it is compared with `meta/publish.lastAt`. A deploy from a push does not clear it.
+- **Any browser:** dates are written by our own code, and photos are encoded with `@jsquash/webp` where the canvas cannot write WebP.

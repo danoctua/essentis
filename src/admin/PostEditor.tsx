@@ -1,15 +1,19 @@
 /**
- * One post: both languages, topics, date, cover and the Markdown body beside a live preview.
+ * One post in three parts: Text (both languages), Settings (topics, date, cover, publishing) and Preview, which sits
+ * beside the other two on a wide screen. A new post is written to the database on its first save, not before.
  * "Апублікаваць" sets the status and, the first time, the frozen slug and the date; the build's own
  * check (postProblem) runs first, so the admin never publishes what the build would reject.
  */
 import { useEffect, useState } from 'preact/hooks';
-import { deletePost, getPost, listPosts, savePost, type EditPost } from './data';
+import { blankPost, deletePost, getPost, listPosts, savePost, type EditPost } from './data';
+import { clearDraft, readDraft, useKeep } from './drafts';
+import { Grow } from './Grow';
 import { imageUrl, uploadImage } from './images';
 import { MdEditor } from './MdEditor';
 import { Preview } from './Preview';
 import { s } from './strings';
-import { afterSave, onSaveKey, unsaved, when } from './util';
+import { Restored, SaveState, TopBar } from './TopBar';
+import { afterSave, onSaveKey, replaceHash, when } from './util';
 import { postProblem } from '../lib/postCheck';
 import { makeSlug } from '../lib/slug';
 import { mediaFile } from '../lib/media';
@@ -42,51 +46,74 @@ function tidy(p: EditPost): EditPost {
   return next;
 }
 
-export function PostEditor({ id }: { id: string }) {
+const PANES = ['text', 'settings', 'preview'] as const;
+type Pane = (typeof PANES)[number];
+const paneName = { text: s.paneText, settings: s.paneSettings, preview: s.preview };
+
+const WIDE = '(min-width: 1100px)';
+function useWide(): boolean {
+  const [wide, setWide] = useState(() => matchMedia(WIDE).matches);
+  useEffect(() => {
+    const m = matchMedia(WIDE), on = () => setWide(m.matches);
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  }, []);
+  return wide;
+}
+
+export function PostEditor({ id, isNew }: { id: string; isNew: boolean }) {
   const [post, setPost] = useState<EditPost | null>(null);
   const [saved, setSaved] = useState('');
+  const [exists, setExists] = useState(!isNew);
   const [tab, setTab] = useState<Lang>('be');
-  const [pane, setPane] = useState<'edit' | 'preview'>('edit');
-  const [msg, setMsg] = useState<{ text: string; bad?: boolean } | null>(null);
+  const [pane, setPane] = useState<Pane>('text');
+  const [rev, setRev] = useState(0);
+  const [restored, setRestored] = useState('');
+  const [note, setNote] = useState('');
+  const [done, setDone] = useState(false);
+  const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const wide = useWide();
 
   useEffect(() => {
-    getPost(id).then((p) => {
-      if (!p) return setMsg({ text: `${s.error}: no post ${id}`, bad: true });
-      setPost(p); setSaved(JSON.stringify(p)); setTab(p.originalLang);
-    }, (e) => setMsg({ text: e.message, bad: true }));
+    const start = (p: EditPost, key: string) => {
+      const k = readDraft<EditPost>(key);
+      // What is on the site is the database's word, not the copy's.
+      const x: EditPost = k ? { ...p, ...k.data, id: p.id, status: p.status, slug: p.slug, updatedAt: p.updatedAt } : p;
+      setSaved(JSON.stringify(p)); setPost(x); setTab(x.originalLang); setRestored(k?.at ?? '');
+    };
+    if (isNew) start(blankPost(id, 'be'), 'post:new');
+    else getPost(id).then((p) => (p ? start(p, `post:${id}`) : setErr(`${s.error}: no post ${id}`)), (e) => setErr(e.message));
   }, [id]);
 
   const dirty = !!post && JSON.stringify(post) !== saved;
-  unsaved.current = dirty;
-  useEffect(() => () => { unsaved.current = false; }, []);
+  const key = exists ? `post:${id}` : 'post:new';
+  const { kept, forget } = useKeep(post && key, post, dirty);
+  const onSite = !!saved && (JSON.parse(saved) as EditPost).status === 'published';
 
   const save = async (next = post) => {
-    if (!next) return;
-    setBusy(true);
+    if (!next || busy) return false;
+    setBusy(true); setErr(''); setNote('');
     try {
       const clean = tidy(next);
       // A published post is rebuilt on every deploy: never save it in a state the build rejects.
       const problem = clean.status === 'published' ? postProblem(clean as Parameters<typeof postProblem>[0]) : null;
-      if (problem) {
-        setMsg({ text: `${s.error}: ${problem}`, bad: true });
-        return false;
-      }
-      const updatedAt = await savePost(clean);
-      const done = { ...clean, updatedAt };
-      setPost((c) => c && afterSave(c, post!, done)); setSaved(JSON.stringify(done));
-      setMsg({ text: s.saved });
+      if (problem) { setErr(`${s.error}: ${problem}`); return false; }
+      const updatedAt = await savePost(clean, onSite || clean.status === 'published');
+      const after = { ...clean, updatedAt };
+      setPost((c) => c && afterSave(c, post!, after)); setSaved(JSON.stringify(after)); setRestored(''); setDone(true);
+      if (!exists) { setExists(true); clearDraft('post:new'); replaceHash(`#/post/${id}`); }
       return true;
     } catch (e) {
-      setMsg({ text: `${s.error}: ${(e as Error).message}`, bad: true });
+      setErr(`${s.error}: ${(e as Error).message}`);
       return false;
     } finally {
       setBusy(false);
     }
   };
-  useEffect(() => onSaveKey(() => save()), [post]);
+  useEffect(() => onSaveKey(() => save()), [post, busy, exists]);
 
-  if (!post) return msg ? <p class={msg.bad ? 'err' : ''}>{msg.text}</p> : <p>{s.loading}</p>;
+  if (!post) return <TopBar title={s.posts} back="#/" error={err} status={err ? '' : s.loading} />;
 
   const v = post.variants[tab] ?? { title: '' };
   const original = post.variants[post.originalLang]?.title ?? '';
@@ -96,112 +123,118 @@ export function PostEditor({ id }: { id: string }) {
     edit((p) => ({ ...p, variants: { ...p.variants, [tab]: { ...(p.variants[tab] ?? { title: '' }), ...patch } } }));
   const toggleTopic = (t: Topic) =>
     edit((p) => ({ ...p, topics: p.topics.includes(t) ? p.topics.filter((x) => x !== t) : TOPICS.filter((x) => x === t || p.topics.includes(x)) }));
+  const pickLang = (l: Lang) => {
+    setTab(l);
+    // Nothing written yet: the language you start in is the original.
+    const o = post.variants[post.originalLang];
+    if (!exists && !o?.title.trim() && !o?.body?.trim()) edit((p) => ({ ...p, originalLang: l, variants: { [l]: p.variants[l] ?? { title: '' } } }));
+  };
 
   const publish = async () => {
     try {
+      if (!original.trim()) return setErr(s.needTitle);
       const taken = (await listPosts()).filter((p) => p.id !== post.id && p.slug).map((p) => p.slug!);
       const next = tidy({ ...post, status: 'published', slug: post.slug || makeSlug(original, taken), publishedAt: post.publishedAt || new Date().toISOString() });
       const problem = postProblem(next as Parameters<typeof postProblem>[0]) ?? (taken.includes(next.slug!) ? `slug "${next.slug}" is taken` : null);
-      if (problem) return setMsg({ text: `${s.error}: ${problem}`, bad: true });
-      if (await save(next)) setMsg({ text: s.publishedNote });
+      if (problem) return setErr(`${s.error}: ${problem}`);
+      if (!post.slug && !confirm(s.confirmPublish(postUrl(next.slug!, 'be')))) return;
+      if (await save(next)) setNote(s.publishedNote);
     } catch (e) {
-      setMsg({ text: `${s.error}: ${(e as Error).message}`, bad: true });
+      setErr(`${s.error}: ${(e as Error).message}`);
     }
   };
+  const unpublish = () => { if (confirm(s.confirmUnpublish)) save({ ...post, status: 'draft' }); };
   const remove = async () => {
     if (!confirm(s.confirmDelete)) return;
-    await deletePost(post.id);
-    unsaved.current = false;
-    location.hash = '#/';
+    try {
+      if (exists) await deletePost(post.id, onSite);
+      forget();
+      location.hash = '#/';
+    } catch (e) { setErr(`${s.error}: ${(e as Error).message}`); }
   };
   const onImage = async (file: File) => `![](${imageUrl((await uploadImage(file, post.id)).base)})`;
   const onCover = async (file?: File) => {
     if (!file) return;
-    setMsg({ text: s.uploading });
+    setNote(s.uploading); setErr('');
     try {
       const u = await uploadImage(file, post.id);
       edit((p) => ({ ...p, cover: { key: u.base, w: u.w, h: u.h, alt: p.cover?.alt ?? '' } }));
-      setMsg(null);
     } catch (e) {
-      setMsg({ text: `${s.uploadFailed}: ${(e as Error).message}`, bad: true });
+      setErr(`${s.uploadFailed}: ${(e as Error).message}`);
     }
+    setNote('');
   };
-  const fail = (text: string) => setMsg({ text, bad: true });
   const published = post.status === 'published';
+  const shown = wide && pane === 'preview' ? 'text' : pane;
 
   return (
-    <div class="editor" data-pane={pane}>
-      <div class="ed-bar">
-        <a href="#/">{s.back}</a>
-        <span class={`badge ${post.status}`}>{published ? s.published : s.draft}</span>
-        <span class="hint" role="status">{busy ? s.saving : dirty ? s.unsaved : msg && !msg.bad ? msg.text : ''}</span>
-        <span class="grow" />
-        <div class="panes" role="group">
-          <button type="button" class="btn" aria-pressed={pane === 'edit'} onClick={() => setPane('edit')}>{s.edit}</button>
-          <button type="button" class="btn" aria-pressed={pane === 'preview'} onClick={() => setPane('preview')}>{s.preview}</button>
-        </div>
-        <button type="button" class="btn" onClick={() => save()} disabled={busy || !dirty}>{s.save}</button>
-        {published
-          ? <button type="button" class="btn" onClick={() => save({ ...post, status: 'draft' })} disabled={busy}>{s.unpublish}</button>
-          : <button type="button" class="btn primary" onClick={publish} disabled={busy}>{s.publish}</button>}
+    <div class="editor" data-pane={shown}>
+      <TopBar title={original || s.newPost} back="#/" error={err}
+        status={<><span class={`badge ${post.status}`}>{published ? s.published : s.draft}</span> <span class="state"><SaveState dirty={dirty} busy={busy} kept={kept} saved={done} /></span></>}
+        notice={note || (restored && dirty && <Restored at={restored} onDiscard={() => { const p = JSON.parse(saved) as EditPost; setPost(p); setTab(p.originalLang); setRev(rev + 1); setRestored(''); }} />)}>
+        <button type="button" class="btn primary" onClick={() => save()} disabled={busy || !dirty}>{s.save}</button>
+      </TopBar>
+
+      <div class="tabs panes" role="group" aria-label={s.panes}>
+        {PANES.filter((x) => !wide || x !== 'preview').map((x) => <button type="button" aria-pressed={shown === x} onClick={() => { setPane(x); if (!wide) scrollTo(0, 0); }}>{paneName[x]}</button>)}
       </div>
-      {msg?.bad && <p class="err" role="alert">{msg.text}</p>}
 
       <div class="ed-main">
-        <div class="fields">
+        <div class="pane-text">
+          <div class="tabs langs-tabs" role="group">
+            {LANGS.map((l) => <button type="button" aria-pressed={tab === l} onClick={() => pickLang(l)}>{s.langTab[l]}{l === post.originalLang ? ` (${s.original})` : ''}</button>)}
+          </div>
+          {tab !== post.originalLang && <p class="hint">{s.translationHint}</p>}
+          <Grow key={`t-${tab}`} class="big-title" lang={tab} label={s.title} placeholder={s.title} value={v.title} onInput={(title) => setV({ title })} />
+          <Grow key={`d-${tab}`} class="big-dek" lang={tab} label={s.dek} placeholder={s.dek} value={v.dek ?? ''} onInput={(dek) => setV({ dek })} />
+          <MdEditor key={`${post.id}-${tab}-${rev}`} value={v.body ?? ''} lang={tab} onChange={(x) => setV({ body: x })} label={`${s.body}, ${s.langTab[tab]}`} onImage={onImage} onError={setErr} minHeight={320} />
+        </div>
+
+        <div class="pane-settings">
+          <fieldset>
+            <legend>{s.topics}</legend>
+            <div class="chips">{TOPICS.map((t) => <button type="button" class="chip" aria-pressed={post.topics.includes(t)} onClick={() => toggleTopic(t)}>{topicLabels.be[t]}</button>)}</div>
+          </fieldset>
+          <label>{s.date}
+            <input type="datetime-local" value={toLocal(post.publishedAt)} onInput={(e) => { const publishedAt = fromLocal(e.currentTarget.value); edit((p) => ({ ...p, publishedAt })); }} />
+            <span class="hint">{post.publishedAt ? when(post.publishedAt) : s.dateLater}</span>
+          </label>
+          <div class="cover">
+            <span class="label">{s.cover}</span>
+            {post.cover ? (
+              <>
+                <div class="actions"><img src={`${MEDIA_URL}/${mediaFile(post.cover.key, 400)}`} alt="" width={88} height={88} />
+                  <button type="button" class="btn" onClick={() => edit((p) => ({ ...p, cover: undefined }))}>{s.removeCover}</button></div>
+                <label>{s.alt}<Grow lang={post.originalLang} value={post.cover.alt ?? ''} onInput={(alt) => edit((p) => ({ ...p, cover: { ...p.cover!, alt } }))} /></label>
+              </>
+            ) : (
+              <label class="btn file">{s.addCover}<input type="file" accept="image/*" onChange={(e) => onCover(e.currentTarget.files?.[0])} /></label>
+            )}
+          </div>
           <label>{s.newPostIn}
             <select value={post.originalLang} onChange={(e) => { const originalLang = e.currentTarget.value as Lang; edit((p) => ({ ...p, originalLang })); }}>
               {LANGS.map((l) => <option value={l}>{s.langTab[l]}</option>)}
             </select>
           </label>
-          <label>{s.date}
-            <input type="datetime-local" value={toLocal(post.publishedAt)} onInput={(e) => { const publishedAt = fromLocal(e.currentTarget.value); edit((p) => ({ ...p, publishedAt })); }} />
-            {!post.publishedAt && <span class="hint">{s.dateLater}</span>}
-          </label>
-          <div class="slug">
-            <span class="label">{s.slug}</span>
-            {post.slug
-              ? <span><code>{postUrl(post.slug, 'be')}</code> <span class="hint">{s.slugFrozen}</span></span>
-              : <span class="hint">{s.slugLater} <code>{postUrl(makeSlug(original, []), 'be')}</code></span>}
+          <div class="publication">
+            <span class="label">{s.publication}</span>
+            <p class="hint">{post.slug ? s.slugFrozen : s.slugLater}</p>
+            <p><code>{postUrl(post.slug || makeSlug(original, []), 'be')}</code></p>
+            <div class="actions">
+              {published
+                ? <button type="button" class="btn" onClick={unpublish} disabled={busy}>{s.unpublish}</button>
+                : <button type="button" class="btn primary" onClick={publish} disabled={busy}>{s.publish}</button>}
+            </div>
+          </div>
+          <div class="danger-zone">
+            {exists && <p class="hint">{s.updated} {when(post.updatedAt)}</p>}
+            <button type="button" class="btn danger" onClick={remove}>{s.remove}</button>
           </div>
         </div>
-
-        <fieldset class="topics">
-          <legend>{s.topics}</legend>
-          {TOPICS.map((t) => <label class="check"><input type="checkbox" checked={post.topics.includes(t)} onChange={() => toggleTopic(t)} /> {topicLabels.be[t]}</label>)}
-        </fieldset>
-
-        <div class="cover">
-          <span class="label">{s.cover}</span>
-          {post.cover ? (
-            <div class="cover-row">
-              <img src={`${MEDIA_URL}/${mediaFile(post.cover.key, 400)}`} alt="" width={88} height={88} />
-              <label class="grow">{s.alt}<input type="text" value={post.cover.alt ?? ''} onInput={(e) => { const alt = e.currentTarget.value; edit((p) => ({ ...p, cover: { ...p.cover!, alt } })); }} /></label>
-              <button type="button" class="btn" onClick={() => edit((p) => ({ ...p, cover: undefined }))}>{s.removeCover}</button>
-            </div>
-          ) : (
-            <label class="btn file">{s.addCover}<input type="file" accept="image/*" onChange={(e) => onCover(e.currentTarget.files?.[0])} /></label>
-          )}
-        </div>
-
-        <div class="tabs" role="tablist">
-          {LANGS.map((l) => (
-            <button type="button" role="tab" aria-selected={tab === l} onClick={() => setTab(l)}>
-              {s.langTab[l]}{l === post.originalLang ? ` (${s.original})` : ''}
-            </button>
-          ))}
-        </div>
-        {tab !== post.originalLang && <p class="hint">{s.translationHint}</p>}
-        <label>{s.title}<input type="text" lang={tab} value={v.title} onInput={(e) => setV({ title: e.currentTarget.value })} /></label>
-        <label>{s.dek}<input type="text" lang={tab} value={v.dek ?? ''} onInput={(e) => setV({ dek: e.currentTarget.value })} /></label>
-        <div class="label-row"><span class="label">{s.body}</span><span class="hint">{s.imagesHint}</span></div>
-        <MdEditor key={`${post.id}-${tab}`} value={v.body ?? ''} onChange={(body) => setV({ body })} label={`${s.body}, ${s.langTab[tab]}`} onImage={onImage} onError={fail} minHeight={420} />
-        <p class="hint">{s.updated} {when(post.updatedAt)}</p>
-        <p><button type="button" class="btn danger" onClick={remove}>{s.remove}</button></p>
       </div>
 
       <aside class="ed-preview" aria-label={s.preview}>
-        <Preview md={v.body ?? ''} lang={tab} title={v.title} dek={v.dek} />
+        {(wide || pane === 'preview') && <Preview md={v.body ?? ''} lang={tab} title={v.title} dek={v.dek} />}
       </aside>
     </div>
   );

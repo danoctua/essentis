@@ -1,50 +1,44 @@
 import { useEffect, useState } from 'preact/hooks';
-import { createPost, listPosts, type EditPost } from './data';
+import { listPosts, type EditPost } from './data';
+import { readDraft } from './drafts';
 import { s } from './strings';
-import { when } from './util';
-import { fmtDate, LANGS, type Lang } from '../data/ui';
+import { TopBar } from './TopBar';
+import { fmtDate, ui, type Lang } from '../data/ui';
+
+const FILTERS = ['all', 'drafts', 'live'] as const;
+type Filter = (typeof FILTERS)[number];
+const shows = (f: Filter, p: EditPost) => f === 'all' || (p.status === 'published') === (f === 'live');
 
 export function PostsList() {
   const [posts, setPosts] = useState<EditPost[] | null>(null);
-  const [lang, setLang] = useState<Lang>('be');
+  const [filter, setFilter] = useState<Filter>('all');
   const [err, setErr] = useState('');
   useEffect(() => { listPosts().then(setPosts, (e) => setErr(e.message)); }, []);
-  const create = async () => {
-    try { location.hash = `#/post/${await createPost(lang)}`; } catch (e) { setErr((e as Error).message); }
-  };
+  const started = readDraft<EditPost>('post:new');
+  const list = posts?.filter((p) => shows(filter, p)) ?? [];
   return (
     <>
-      <div class="head">
-        <h1 class="page-title">{s.posts}</h1>
-        <div class="row">
-          <label class="inline">{s.newPostIn}
-            <select value={lang} onChange={(e) => setLang(e.currentTarget.value as Lang)}>
-              {LANGS.map((l) => <option value={l}>{s.langTab[l]}</option>)}
-            </select>
-          </label>
-          <button type="button" class="btn primary" onClick={create}>{s.newPost}</button>
-        </div>
-      </div>
-      {err && <p class="err" role="alert">{err}</p>}
-      {posts === null ? <p>{s.loading}</p> : posts.length === 0 ? <p class="muted">{s.noPosts}</p> : (
-        <ul class="list">
-          {posts.map((p) => {
-            const title = p.variants[p.originalLang]?.title?.trim();
-            const other: Lang = p.originalLang === 'be' ? 'en' : 'be';
-            const v = p.variants[other];
-            return (
-              <li><a href={`#/post/${p.id}`}>
-                <span class="ttl" lang={p.originalLang}>{title || s.untitled}</span>
-                <span class="meta">
-                  <span class={`badge ${p.status}`}>{p.status === 'published' ? s.published : s.draft}</span>
-                  {' '}{p.originalLang.toUpperCase()}{v?.body ? ` + ${other.toUpperCase()}` : v?.title ? ` (${other.toUpperCase()}: ${s.title.toLowerCase()})` : ''}
-                  {' · '}{p.publishedAt ? fmtDate(new Date(p.publishedAt), 'be') : s.noDate}
-                  {' · '}{s.updated.toLowerCase()} {when(p.updatedAt)}
-                </span>
-              </a></li>
-            );
-          })}
-        </ul>
+      <TopBar title={s.posts} error={err}><a class="btn primary" href="#/new" aria-label={s.newPost}>{s.newShort}</a></TopBar>
+      {!posts ? !err && <p>{s.loading}</p> : (
+        <>
+          <div class="chips" role="group" aria-label={s.filter}>
+            {FILTERS.map((f) => <button type="button" class="chip" aria-pressed={filter === f} onClick={() => setFilter(f)}>{s[f]} {posts.filter((p) => shows(f, p)).length}</button>)}
+          </div>
+          <ul class="list">
+            {started && <li><a href="#/new"><span class="ttl">{Object.values(started.data.variants).map((v) => v?.title?.trim()).find(Boolean) || s.newPost}</span><span class="meta"><b>{s.notSaved}</b></span></a></li>}
+            {list.map((p) => {
+              const other: Lang = p.originalLang === 'be' ? 'en' : 'be';
+              const meta = [p.status === 'published' ? s.published : s.draft, ui.be.langName[p.originalLang], p.variants[other]?.body && s.translated, p.publishedAt ? fmtDate(new Date(p.publishedAt), 'be') : s.noDate];
+              return (
+                <li><a href={`#/post/${p.id}`}>
+                  <span class="ttl" lang={p.originalLang}>{p.variants[p.originalLang]?.title?.trim() || s.untitled}</span>
+                  <span class="meta">{meta.filter(Boolean).join(', ')}{readDraft(`post:${p.id}`) && <>, <b>{s.notSaved}</b></>}</span>
+                </a></li>
+              );
+            })}
+          </ul>
+          {!list.length && !started && <p class="muted">{posts.length ? s.nothingHere : s.noPosts}</p>}
+        </>
       )}
     </>
   );

@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
-import { afterSave, byDate } from '../src/admin/util';
+import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state';
+import { afterSave, byDate, glimpse, when } from '../src/admin/util';
+import { link, prefix, wrap } from '../src/admin/format';
 import { describe, expect, it } from 'vitest';
 import { parseWebConfig } from '../src/admin/config';
 import { makeSlug } from '../src/lib/slug';
@@ -92,4 +94,35 @@ describe('editing while something is running', () => {
     const src = readFileSync(new URL('../src/admin/MdEditor.tsx', import.meta.url), 'utf8');
     expect(src).not.toMatch(/\[value\]/);
   });
+});
+
+describe('formatting commands', () => {
+  // "|" marks the ends of the selection, before and after.
+  const run = (marked: string, f: (s: EditorState) => TransactionSpec): string => {
+    const a = marked.indexOf('|'), b = marked.lastIndexOf('|');
+    const doc = marked.replaceAll('|', '');
+    const state = EditorState.create({ doc, selection: EditorSelection.range(a, a === b ? a : b - 1) });
+    const next = state.update(f(state)).state, r = next.selection.main, t = next.doc.toString();
+    return r.empty ? `${t.slice(0, r.from)}|${t.slice(r.from)}` : `${t.slice(0, r.from)}|${t.slice(r.from, r.to)}|${t.slice(r.to)}`;
+  };
+  const bold = (s: EditorState) => wrap(s, '**'), italic = (s: EditorState) => wrap(s, '*');
+  it.each([
+    ['a |b| c', bold, 'a **|b|** c'], ['a **|b|** c', bold, 'a |b| c'], ['a |**b**| c', bold, 'a |b| c'], ['a | c', bold, 'a **|** c'],
+    ['a **|b|** c', italic, 'a ***|b|*** c'], ['a *|b|* c', italic, 'a |b| c'], ['a |**b**| c', italic, 'a *|**b**|* c'],
+  ] as const)('wrap %s', (from, f, to) => expect(run(from, f)).toBe(to));
+  it.each([
+    ['a|b', '## ', '## a|b'], ['## a|b', '## ', 'a|b'], ['> a|b', '- ', '- a|b'], ['|a\n\nb|', '- ', '- |a\n\n- b|'], ['- |a\n- b|', '- ', '|a\nb|'], ['|', '> ', '> |'],
+  ] as const)('prefix %s with %s', (from, p, to) => expect(run(from, (s) => prefix(s, p))).toBe(to));
+  it.each([
+    ['see |this| now', 'see [this](|https://|) now'], ['see | now', 'see [|](https://) now'], ['|https://x.by/a|', '[|](https://x.by/a)'],
+  ])('link %s', (from, to) => expect(run(from, link)).toBe(to));
+});
+
+it('writes dates in Belarusian whatever the browser knows', () => {
+  expect(when('2026-11-24T12:05:00Z').replace(/\u00a0/g, ' ')).toMatch(/^24 лістапада 2026, \d\d:05$/);
+  expect(when()).toBe('');
+});
+it('shows the first words of a collapsed text without marks', () => {
+  expect(glimpse('_на **бальнічным**_ [тут](https://x.by)\n\n![](a.webp)')).toBe('на бальнічным тут');
+  expect(glimpse('слова '.repeat(30), 20)).toBe('слова слова слова…');
 });
