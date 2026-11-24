@@ -58,7 +58,7 @@ tools/tg_sync (Python, local): Telethon → Pillow WebP → R2 (boto3) + Firesto
 Field rules:
 - **`slug`:** generated from the original title on first publish, then frozen.
 - **Gloss:** a variant with only a `title` acts as the title gloss shown in the other language.
-- **Translations:** a variant with a `body` is a full translation. The other-language page shows it, or falls back to the original with "Гэты допіс па-ангельску…".
+- **Translations:** a variant with a `body` is a full translation. The other-language page shows it, or falls back to the original with "Гэты допіс па-англійску…".
 - **Media keys:**
   - posts: `posts/{postId}/{hash}-{400|800|1600}.webp`
   - notes: `notes/{msgId}/{n}-{w}.webp`
@@ -110,7 +110,7 @@ Static configuration stays in the repo, in `src/lib/site.ts`: links, email, navi
 
 ### 3. Admin
 - **Shell:** `/admin`, a static page with `noindex` that mounts a Preact island (`src/admin/`).
-- **Sign-in:** Google sign-in through Firebase Auth. A wrong account gets "Гэты акаўнт ня мае доступу".
+- **Sign-in:** Google sign-in through Firebase Auth. A wrong account gets "Гэты акаўнт не мае доступу".
 - **Posts:**
   - a list with status and language badges;
   - an editor with BE/EN tabs, each with title, dek and body;

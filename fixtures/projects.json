@@ -3,7 +3,7 @@
     "id": "boardie",
     "name": "Boardie",
     "text": {
-      "be": "Мой уласны праект, які раблю з 2017 году і дагэтуль актыўна разьвіваю: вэб- і Android-праграма (FastAPI, Next.js, Capacitor). Сотні людзей кожны тыдзень плануюць зь ёй сустрэчы і справы і чытаюць закрытыя абвесткі.",
+      "be": "Мой уласны праект, які раблю з 2017 года і дагэтуль актыўна развіваю: вэб- і Android-праграма (FastAPI, Next.js, Capacitor). Сотні людзей кожны тыдзень плануюць з ёй сустрэчы і справы і чытаюць закрытыя абвесткі.",
       "en": "A pet project I've been building since 2017 and still actively work on: a web and Android app (FastAPI, Next.js, Capacitor). Hundreds of people use it every week to schedule meetings and activities and to read private announcements."
     },
     "order": 0
@@ -13,7 +13,7 @@
     "name": "Access",
     "url": "https://github.com/OpenBuilders/access-tool",
     "text": {
-      "be": "Бясплатны Telegram-бот з адкрытым кодам: пускае ў закрытыя чаты і каналы тых, хто мае патрэбныя токены, NFT, Telegram Gifts або стыкеры. Я ягоны асноўны распрацоўнік. У лістападзе 2025 году: 600+ актыўных чатаў і 25 000+ падлучаных удзельнікаў ([анонс](https://t.me/builders/297), [статыстыка](https://t.me/builders/302)).",
+      "be": "Бясплатны Telegram-бот з адкрытым кодам: пускае ў закрытыя чаты і каналы тых, хто мае патрэбныя токены, NFT, Telegram Gifts або стыкеры. Я яго асноўны распрацоўшчык. У лістападзе 2025 года: 600+ актыўных чатаў і 25 000+ падключаных удзельнікаў ([анонс](https://t.me/builders/297), [статыстыка](https://t.me/builders/302)).",
       "en": "A free, open-source Telegram bot that lets people into private chats and channels when they hold the right tokens, NFTs, Telegram Gifts or stickers. I'm its main developer. By November 2025: 600+ active chats and 25K+ members connected ([launch](https://t.me/builders/297), [stats](https://t.me/builders/302))."
     },
     "order": 1
@@ -33,7 +33,7 @@
     "name": "RNAspider",
     "url": "https://rnaspider.cs.put.poznan.pl/",
     "text": {
-      "be": "Вэб-сэрвэр, які знаходзіць пераплётаньні ў прасторавых структурах РНК. Я адзін з аўтараў; артыкул выйшаў у Oxford Academic у 2022 годзе.",
+      "be": "Вэб-сервер, які знаходзіць перапляценні ў прасторавых структурах РНК. Я адзін з аўтараў; артыкул выйшаў у Oxford Academic у 2022 годзе.",
       "en": "A web server that finds entanglements in RNA 3D structures. I'm one of its authors; the paper came out with Oxford Academic in 2022."
     },
     "order": 3

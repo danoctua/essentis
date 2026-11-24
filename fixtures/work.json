@@ -6,7 +6,7 @@
     "role": "Lead Engineer",
     "company": "CluePoints",
     "line": {
-      "be": "Софт для клінічных дасьледаваньняў. Кірую камандай, якая робіць кіраваньне рэсурсамі, аўтэнтыфікацыю і аўтарызацыю, і ўводжу ў яе працу агентаў ШІ.",
+      "be": "Софт для клінічных даследаванняў. Кірую камандай, якая робіць кіраванне рэсурсамі, аўтэнтыфікацыю і аўтарызацыю, і ўводжу ў яе працу агентаў ШІ.",
       "en": "Software for clinical trials. I lead the squad behind resource management, authentication and authorization, and bring AI agents into how it works."
     },
     "order": 0
@@ -18,7 +18,7 @@
     "role": "Technical Lead",
     "company": "STX Next",
     "line": {
-      "be": "Спачатку кіраваў камандай Python і React, потым камандай асноўнага сэрвісу плятформы для некалькіх праграм: рэсурсы, аўтэнтыфікацыя і аўтарызацыя.",
+      "be": "Спачатку кіраваў камандай Python і React, потым камандай асноўнага сэрвісу платформы для некалькіх праграм: рэсурсы, аўтэнтыфікацыя і аўтарызацыя.",
       "en": "First led a Python and React team, then the squad behind a core platform service used by several applications: resources, authentication and authorization."
     },
     "order": 1
@@ -30,7 +30,7 @@
     "role": "Python Developer",
     "company": "STX Next",
     "line": {
-      "be": "Вэб-праграмы для кіраваньня кампаніяй і фінансамі: Django, React з MobX, MSSQL на Azure. Скрэйпэры на Scrapy. Дапамагаў новым калегам увайсьці ў працу.",
+      "be": "Вэб-праграмы для кіравання кампаніяй і фінансамі: Django, React з MobX, MSSQL на Azure. Скрэйперы на Scrapy. Дапамагаў новым калегам увайсці ў працу.",
       "en": "Web apps for company and financial management: Django, React with MobX, MSSQL on Azure. Scrapers with Scrapy. Helped new colleagues find their feet."
     },
     "order": 2
@@ -42,7 +42,7 @@
     "role": "Owner",
     "company": "DTLgroup",
     "line": {
-      "be": "IT-паслугі для малога бізнэсу і прыватных асоб, у тым ліку маніторынг на Elasticsearch і Kibana.",
+      "be": "IT-паслугі для малога бізнесу і прыватных асоб, у тым ліку маніторынг на Elasticsearch і Kibana.",
       "en": "IT services for small businesses and individuals, including monitoring with Elasticsearch and Kibana."
     },
     "order": 3
@@ -54,7 +54,7 @@
     "role": "Software Engineer",
     "company": "Freelance",
     "line": {
-      "be": "Сыстэма аўтаматызацыі і краўлінгу, якая зьбірала даныя з розных сайтаў і крыніц.",
+      "be": "Сістэма аўтаматызацыі і краўлінгу, якая збірала даныя з розных сайтаў і крыніц.",
       "en": "A crawling and automation system that collected data from many websites and sources."
     },
     "order": 4

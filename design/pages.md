@@ -30,7 +30,7 @@ The bio on Home is about the person, not the job: two or three sentences. Work g
 
 Draft built from what the owner has shared (to be replaced with his own words):
 
-> **BE.** Беларус, які жыве ў Польшчы. Інжынэр, муж, чытач Бахарэвіча і Караткевіча. Слухаю ўсё ад фолку да рэпу і вандрую.
+> **BE.** Беларус, які жыве ў Польшчы. Інжынер, муж, чытач Бахарэвіча і Караткевіча. Слухаю ўсё ад фолку да рэпу і вандрую.
 >
 > **EN.** A Belarusian living in Poland. Engineer, husband, reader of Bakharevich and Karatkevich. I listen to everything from folk to rap, and I travel.
 
@@ -51,4 +51,4 @@ Header, then the avatar and name with the bio on the left and the Now block besi
 
 ## Post lists
 
-Each row: the post ornament (or a cover photo, cropped square), the title in the post's own language with its `lang`, a gloss in the interface language when they differ, and one meta line: "12 лістапада, па-ангельску, 6 хв". No cards, no excerpts on Home; Writing may show the dek.
+Each row: the post ornament (or a cover photo, cropped square), the title in the post's own language with its `lang`, a gloss in the interface language when they differ, and one meta line: "12 лістапада, па-англійску, 6 хв". No cards, no excerpts on Home; Writing may show the dek.

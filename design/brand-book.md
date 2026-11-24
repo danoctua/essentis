@@ -60,7 +60,7 @@ Quiet, reflective and specific. Write the way you would explain something to a c
 - No exclamation marks, no greetings ("Hi, I'm…"), no hype words (seamless, supercharge, game-changing, unlock).
 - Concrete over clever: "I lead a squad of senior engineers at CluePoints" beats "passionate leader".
 - No invented numbers or testimonials.
-- Belarusian is written in Taraškievica (сьвет, жыцьцё, рашэньні, інжынэр). Every new Belarusian string gets the owner's proofreading.
+- Belarusian follows the official orthography, the 2008 rules (свет, жыццё, рашэнні, інжынер), not Taraškievica. Telegram posts and album captions are never edited: they keep the channel's own spelling. Every new Belarusian string gets the owner's proofreading.
 - Every fragment in the other language carries a `lang` attribute: `be` for Cyrillic, `be-Latn` for Łacinka, `en` for English.
 
 ## Colour
@@ -117,7 +117,7 @@ Colour changes on hover and focus (150 ms). Nothing else moves. No scroll effect
 ## Accessibility checklist
 
 - Visible focus ring on everything: 2 px `focus`, 3 px offset.
-- A skip link on every page ("Перайсьці да зьместу" / "Skip to content").
+- A skip link on every page ("Перайсці да зместу" / "Skip to content").
 - `lang` on the root and on every fragment in another language.
 - Non-breaking spaces between numbers and units ("6 хв", "12 лістапада").
 - Contrast as in the colour table, checked in both themes.

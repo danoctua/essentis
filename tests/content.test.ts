@@ -27,7 +27,7 @@ describe('postView', () => {
   it('shows the original with a gloss when there is no translation', () => {
     const v = postView(base, 'be');
     expect(v).toMatchObject({ lang: 'en', foreign: true, title: 'English title', gloss: 'Беларуская назва', url: '/dopisy/s/' });
-    expect(v.meta).toBe('12 лістапада, па-ангельску, 2 хв');
+    expect(v.meta).toBe('12 лістапада, па-англійску, 2 хв');
   });
   it('shows the translation when it has a body', () => {
     const p = { ...base, variants: { ...base.variants, be: { title: 'Назва', body: 'Тэкст' } } };
