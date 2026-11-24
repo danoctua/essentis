@@ -52,5 +52,10 @@
     "@playwright/test": "^1.65.1",
     "typescript": "^7.0.2",
     "vitest": "^5.1.1"
+  },
+  "overrides": {
+    "jwks-rsa": {
+      "jose": "5.10.0"
+    }
   }
 }

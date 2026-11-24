@@ -1,5 +1,4 @@
 /** Presigned uploads to Cloudflare R2 (S3-compatible). The browser PUTs straight to R2; no file passes through Vercel. */
-import { AwsClient } from 'aws4fetch';
 import { env } from './env';
 
 export interface R2 { accountId: string; accessKeyId: string; secretAccessKey: string; bucket: string }
@@ -12,6 +11,7 @@ export function r2Config(): R2 | null {
 
 /** A URL that allows one PUT of `key` with exactly this Content-Type, valid for ten minutes. */
 export async function presignPut(cfg: R2, key: string, contentType: string, expires = 600): Promise<string> {
+  const { AwsClient } = await import('aws4fetch');
   const client = new AwsClient({ accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey, service: 's3', region: 'auto' });
   const url = new URL(`https://${cfg.accountId}.r2.cloudflarestorage.com/${cfg.bucket}/${key}`);
   url.searchParams.set('X-Amz-Expires', String(expires));
