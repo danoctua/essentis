@@ -51,7 +51,7 @@ export function NowEditor() {
         <div class="tabs" role="tablist">
           {LANGS.map((l) => <button type="button" role="tab" aria-selected={tab === l} onClick={() => setTab(l)}>{s.langTab[l]}</button>)}
         </div>
-        <MdEditor key={tab} value={text[tab]} onChange={(v) => setText({ ...text, [tab]: v })} label={`${s.now}, ${s.langTab[tab]}`} onError={(t) => setMsg({ text: t, bad: true })} minHeight={200} />
+        <MdEditor key={tab} value={text[tab]} onChange={(v) => setText((c) => c && { ...c, [tab]: v })} label={`${s.now}, ${s.langTab[tab]}`} onError={(t) => setMsg({ text: t, bad: true })} minHeight={200} />
         <p class={n > 150 ? 'err' : 'hint'}>{s.words(n)}{n > 150 ? `. ${s.nowTooLong}` : ''}</p>
       </div>
       <aside class="ed-preview" aria-label={s.preview}>

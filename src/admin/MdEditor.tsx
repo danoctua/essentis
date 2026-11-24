@@ -1,4 +1,10 @@
-/** Plain Markdown editing in CodeMirror 6. Pasted or dropped images go to `onImage`, which returns the Markdown to insert. */
+/**
+ * Plain Markdown editing in CodeMirror 6. Pasted or dropped images go to `onImage`, which returns the Markdown to insert.
+ *
+ * Uncontrolled: `value` is only the starting text, and the editor owns it from then on. Never write `value` back into the
+ * editor: a late render carries older text, which would replace newer typing, report a change, and loop until the page
+ * freezes. To show another document, change the `key`.
+ */
 import { useEffect, useRef } from 'preact/hooks';
 import { minimalSetup } from 'codemirror';
 import { EditorState } from '@codemirror/state';
@@ -26,6 +32,7 @@ const theme = EditorView.theme({
 });
 
 interface Props {
+  /** The starting text; later changes are ignored. */
   value: string;
   onChange: (v: string) => void;
   label: string;
@@ -37,7 +44,6 @@ interface Props {
 
 export function MdEditor({ value, onChange, label, onImage, onError, minHeight = 120 }: Props) {
   const host = useRef<HTMLDivElement>(null);
-  const view = useRef<EditorView>();
   const props = useRef({ onChange, onImage, onError });
   props.current = { onChange, onImage, onError };
 
@@ -78,15 +84,8 @@ export function MdEditor({ value, onChange, label, onImage, onError, minHeight =
         ],
       }),
     });
-    view.current = v;
     return () => v.destroy();
   }, []);
-
-  // A value replaced from outside (loading, switching documents) resets the editor.
-  useEffect(() => {
-    const v = view.current;
-    if (v && v.state.doc.toString() !== value) v.dispatch({ changes: { from: 0, to: v.state.doc.length, insert: value } });
-  }, [value]);
 
   return <div class="md" ref={host} />;
 }

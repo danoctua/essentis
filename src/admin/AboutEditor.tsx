@@ -54,7 +54,7 @@ export function AboutEditor() {
       {FIELDS.map((f) => (
         <div class="field">
           <span class="label">{s[f]}</span>
-          <MdEditor key={`${tab}-${f}`} value={t[tab][f]} onChange={(v) => setT({ ...t, [tab]: { ...t[tab], [f]: v } })} label={`${s[f]}, ${s.langTab[tab]}`} onError={(x) => setMsg({ text: x, bad: true })} minHeight={f === 'bio' ? 60 : 110} />
+          <MdEditor key={`${tab}-${f}`} value={t[tab][f]} onChange={(v) => setT((c) => c && { ...c, [tab]: { ...c[tab], [f]: v } })} label={`${s[f]}, ${s.langTab[tab]}`} onError={(x) => setMsg({ text: x, bad: true })} minHeight={f === 'bio' ? 60 : 110} />
         </div>
       ))}
     </div>

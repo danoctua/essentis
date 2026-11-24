@@ -1,4 +1,5 @@
-import { byDate } from '../src/admin/util';
+import { readFileSync } from 'node:fs';
+import { afterSave, byDate } from '../src/admin/util';
 import { describe, expect, it } from 'vitest';
 import { parseWebConfig } from '../src/admin/config';
 import { makeSlug } from '../src/lib/slug';
@@ -79,4 +80,16 @@ it('lists undated drafts first, then posts by their own date, whenever they were
   const p = (id: string, publishedAt?: string, updatedAt = '2026-11-24') => ({ id, publishedAt, updatedAt });
   const ids = [p('old', '2024-02-12'), p('new', '2026-02-13', '2026-01-01'), p('draft', undefined, '2026-01-02'), p('mid', '2025-05-23'), p('draft2')].sort(byDate).map((x) => x.id);
   expect(ids).toEqual(['draft2', 'draft', 'new', 'mid', 'old']);
+});
+
+describe('editing while something is running', () => {
+  const sent = { status: 'draft', title: 'a' } as { status: string; title: string; slug?: string; publishedAt?: string; updatedAt?: string };
+  const done = { ...sent, status: 'published', slug: 'a', publishedAt: '2026-01-01', updatedAt: '2026-01-02' };
+  it('takes the saved post when nothing changed meanwhile', () => expect(afterSave(sent, sent, done)).toBe(done));
+  it('keeps what was typed while the save ran', () =>
+    expect(afterSave({ ...sent, title: 'ab' }, sent, done)).toEqual({ ...done, title: 'ab' }));
+  it('never writes the value back into the open editor (that loop froze the page)', () => {
+    const src = readFileSync(new URL('../src/admin/MdEditor.tsx', import.meta.url), 'utf8');
+    expect(src).not.toMatch(/\[value\]/);
+  });
 });

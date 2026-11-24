@@ -9,7 +9,7 @@ import { imageUrl, uploadImage } from './images';
 import { MdEditor } from './MdEditor';
 import { Preview } from './Preview';
 import { s } from './strings';
-import { onSaveKey, unsaved, when } from './util';
+import { afterSave, onSaveKey, unsaved, when } from './util';
 import { postProblem } from '../lib/postCheck';
 import { makeSlug } from '../lib/slug';
 import { mediaFile } from '../lib/media';
@@ -74,7 +74,7 @@ export function PostEditor({ id }: { id: string }) {
       }
       const updatedAt = await savePost(clean);
       const done = { ...clean, updatedAt };
-      setPost(done); setSaved(JSON.stringify(done));
+      setPost((c) => c && afterSave(c, post!, done)); setSaved(JSON.stringify(done));
       setMsg({ text: s.saved });
       return true;
     } catch (e) {
@@ -90,10 +90,12 @@ export function PostEditor({ id }: { id: string }) {
 
   const v = post.variants[tab] ?? { title: '' };
   const original = post.variants[post.originalLang]?.title ?? '';
+  // Always from the latest post: an upload or a save may finish after more typing.
+  const edit = (f: (p: EditPost) => EditPost) => setPost((p) => p && f(p));
   const setV = (patch: Partial<Variant>) =>
-    setPost({ ...post, variants: { ...post.variants, [tab]: { ...v, ...patch } } });
+    edit((p) => ({ ...p, variants: { ...p.variants, [tab]: { ...(p.variants[tab] ?? { title: '' }), ...patch } } }));
   const toggleTopic = (t: Topic) =>
-    setPost({ ...post, topics: post.topics.includes(t) ? post.topics.filter((x) => x !== t) : TOPICS.filter((x) => x === t || post.topics.includes(x)) });
+    edit((p) => ({ ...p, topics: p.topics.includes(t) ? p.topics.filter((x) => x !== t) : TOPICS.filter((x) => x === t || p.topics.includes(x)) }));
 
   const publish = async () => {
     try {
@@ -118,7 +120,7 @@ export function PostEditor({ id }: { id: string }) {
     setMsg({ text: s.uploading });
     try {
       const u = await uploadImage(file, post.id);
-      setPost({ ...post, cover: { key: u.base, w: u.w, h: u.h, alt: post.cover?.alt ?? '' } });
+      edit((p) => ({ ...p, cover: { key: u.base, w: u.w, h: u.h, alt: p.cover?.alt ?? '' } }));
       setMsg(null);
     } catch (e) {
       setMsg({ text: `${s.uploadFailed}: ${(e as Error).message}`, bad: true });
@@ -148,12 +150,12 @@ export function PostEditor({ id }: { id: string }) {
       <div class="ed-main">
         <div class="fields">
           <label>{s.newPostIn}
-            <select value={post.originalLang} onChange={(e) => setPost({ ...post, originalLang: e.currentTarget.value as Lang })}>
+            <select value={post.originalLang} onChange={(e) => { const originalLang = e.currentTarget.value as Lang; edit((p) => ({ ...p, originalLang })); }}>
               {LANGS.map((l) => <option value={l}>{s.langTab[l]}</option>)}
             </select>
           </label>
           <label>{s.date}
-            <input type="datetime-local" value={toLocal(post.publishedAt)} onInput={(e) => setPost({ ...post, publishedAt: fromLocal(e.currentTarget.value) })} />
+            <input type="datetime-local" value={toLocal(post.publishedAt)} onInput={(e) => { const publishedAt = fromLocal(e.currentTarget.value); edit((p) => ({ ...p, publishedAt })); }} />
             {!post.publishedAt && <span class="hint">{s.dateLater}</span>}
           </label>
           <div class="slug">
@@ -174,8 +176,8 @@ export function PostEditor({ id }: { id: string }) {
           {post.cover ? (
             <div class="cover-row">
               <img src={`${MEDIA_URL}/${mediaFile(post.cover.key, 400)}`} alt="" width={88} height={88} />
-              <label class="grow">{s.alt}<input type="text" value={post.cover.alt ?? ''} onInput={(e) => setPost({ ...post, cover: { ...post.cover!, alt: e.currentTarget.value } })} /></label>
-              <button type="button" class="btn" onClick={() => setPost({ ...post, cover: undefined })}>{s.removeCover}</button>
+              <label class="grow">{s.alt}<input type="text" value={post.cover.alt ?? ''} onInput={(e) => { const alt = e.currentTarget.value; edit((p) => ({ ...p, cover: { ...p.cover!, alt } })); }} /></label>
+              <button type="button" class="btn" onClick={() => edit((p) => ({ ...p, cover: undefined }))}>{s.removeCover}</button>
             </div>
           ) : (
             <label class="btn file">{s.addCover}<input type="file" accept="image/*" onChange={(e) => onCover(e.currentTarget.files?.[0])} /></label>

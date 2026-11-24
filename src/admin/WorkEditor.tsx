@@ -37,14 +37,17 @@ export function WorkEditor() {
     try {
       await Promise.all([saveList('work', l.work, l.removed.work), saveList('projects', l.projects, l.removed.projects)]);
       const x = { ...l, removed: { work: [], projects: [] } };
-      setL(x); setSaved(JSON.stringify(x)); setMsg({ text: s.saved });
+      // Keep anything typed, or removed, while the save was running.
+      const left = (k: 'work' | 'projects', c: Lists) => c.removed[k].filter((id) => !l.removed[k].includes(id));
+      setL((c) => c && { ...c, removed: { work: left('work', c), projects: left('projects', c) } });
+      setSaved(JSON.stringify(x)); setMsg({ text: s.saved });
     } catch (e) { setMsg({ text: `${s.error}: ${(e as Error).message}`, bad: true }); }
   };
   useEffect(() => onSaveKey(save), [l]);
   if (!l) return <p class={msg?.bad ? 'err' : ''}>{msg?.text ?? s.loading}</p>;
 
-  const setWork = (i: number, patch: Partial<Work>) => setL({ ...l, work: l.work.map((w, k) => (k === i ? { ...w, ...patch } : w)) });
-  const setProj = (i: number, patch: Partial<Project>) => setL({ ...l, projects: l.projects.map((p, k) => (k === i ? { ...p, ...patch } : p)) });
+  const setWork = (i: number, patch: Partial<Work>) => setL((c) => c && { ...c, work: c.work.map((w, k) => (k === i ? { ...w, ...patch } : w)) });
+  const setProj = (i: number, patch: Partial<Project>) => setL((c) => c && { ...c, projects: c.projects.map((p, k) => (k === i ? { ...p, ...patch } : p)) });
   const tools = (kind: 'work' | 'projects', i: number, id: string) => (
     <div class="row">
       <button type="button" class="btn" onClick={() => setL({ ...l, [kind]: move(l[kind] as unknown[], i, -1) })} disabled={i === 0}>{s.up}</button>

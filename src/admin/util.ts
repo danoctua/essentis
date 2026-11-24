@@ -12,6 +12,11 @@ export function byDate(a: { publishedAt?: string; updatedAt?: string }, b: { pub
   return (b[key] ?? '').localeCompare(a[key] ?? '');
 }
 
+/** The post to show once `done` is saved: whatever was typed while the save ran (`now` is no longer `sent`) stays. */
+export function afterSave<P extends { status: string; slug?: string; publishedAt?: string; updatedAt?: string }>(now: P, sent: P, done: P): P {
+  return now === sent ? done : { ...now, status: done.status, slug: done.slug, publishedAt: now.publishedAt ?? done.publishedAt, updatedAt: done.updatedAt };
+}
+
 /** Ctrl+S / Cmd+S while mounted. */
 export function onSaveKey(fn: () => void) {
   const h = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); fn(); } };
